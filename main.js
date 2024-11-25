@@ -310,25 +310,6 @@ client.once('ready', () => {
     startNewsInterval(client);
 });
 
-const { Client, GatewayIntentBits } = require('discord.js');
-const { createDeviceEmbed } = require('.events/devicesearch.js'); // Ajuste o caminho para o arquivo do script
-require('dotenv').config();
-
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
-client.once('ready', async () => {
-    console.log(`${client.user.tag} está online!`);
-
-    // ID do canal onde o embed será enviado
-    const channel = client.channels.cache.get('1310694029083672587'); // Substitua pelo ID do canal correto
-
-    if (channel) {
-        try {
-            const { embed, row, buttonRow } = await createDeviceEmbed();
-            await channel.send({ embeds: [embed], components: [row, buttonRow] });
-            console.log('Embed enviado com sucesso.');
-     
-
 
 client.login(process.env.TOKEN);
 
