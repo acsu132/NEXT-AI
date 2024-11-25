@@ -7,7 +7,11 @@ const CHANNEL_ID = '1309897299278696618'; // Substitua pelo ID do canal
 async function fetchAndroidNews() {
     try {
         const response = await axios.get('https://newsapi.org/v2/everything', {
-            params: { q: 'android', apiKey: NEWS_API_KEY },
+            params: {
+                q: 'android',
+                apiKey: NEWS_API_KEY,
+                language: 'pt', // Adiciona idioma português
+            },
         });
         return response.data.articles;
     } catch (error) {
