@@ -1,6 +1,7 @@
-require('dotenv').config();
+// news.js
 const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
+require('dotenv').config();
 
 const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf';
 const CHANNEL_ID = '1309897299278696618';
@@ -8,10 +9,7 @@ const CHANNEL_ID = '1309897299278696618';
 async function fetchAndroidNews() {
     try {
         const response = await axios.get('https://newsapi.org/v2/everything', {
-            params: {
-                q: 'android',
-                apiKey: NEWS_API_KEY,
-            },
+            params: { q: 'android', apiKey: NEWS_API_KEY },
         });
         return response.data.articles;
     } catch (error) {
@@ -30,7 +28,7 @@ async function sendAndroidNews(client) {
     }
 
     if (newsArticles.length > 0) {
-        for (const article of newsArticles.slice(0, 5)) { // Envia até 5 notícias
+        for (const article of newsArticles.slice(0, 5)) {
             const embed = new EmbedBuilder()
                 .setColor('#0099ff')
                 .setTitle(article.title)
@@ -51,8 +49,8 @@ async function sendAndroidNews(client) {
 }
 
 function startNewsInterval(client) {
-    sendAndroidNews(client); // Enviar notícias imediatamente
+    sendAndroidNews(client); // Enviar imediatamente
     setInterval(() => sendAndroidNews(client), 7200000); // 2 horas
 }
 
-module.exports = { startNewsInterval };
+module.exports = { startNewsInterval, sendAndroidNews };
