@@ -1,6 +1,7 @@
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const { startNewsInterval } = require('.events/news.js'); // Caminho para o news.js
 require('dotenv').config();
 const axios = require('axios');
 const { DisTube } = require('distube');
