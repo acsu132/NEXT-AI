@@ -4,6 +4,7 @@ const axios = require('axios');
 const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf'; // Chave embutida no código
 const CHANNEL_ID = '1309897299278696618'; // Substitua pelo ID do canal
 
+// Função para buscar notícias
 async function fetchAndroidNews() {
     try {
         const response = await axios.get('https://newsapi.org/v2/everything', {
@@ -20,6 +21,7 @@ async function fetchAndroidNews() {
     }
 }
 
+// Função para enviar notícias
 async function sendAndroidNews(client) {
     console.log('Iniciando envio de notícias...');
     const newsArticles = await fetchAndroidNews();
@@ -32,9 +34,8 @@ async function sendAndroidNews(client) {
     }
 
     if (newsArticles.length > 0) {
-const articlesToSend = newsArticles.slice(0, 1); // Limita a 1 notícia
-for (const article of articlesToSend) {
-
+        const articlesToSend = newsArticles.slice(0, 1); // Limita a 1 notícia
+        for (const article of articlesToSend) {
             const embed = new EmbedBuilder()
                 .setColor('#0099ff')
                 .setTitle(article.title)
@@ -54,6 +55,7 @@ for (const article of articlesToSend) {
     }
 }
 
+// Função para intervalos automáticos
 function startNewsInterval(client) {
     sendAndroidNews(client); // Enviar imediatamente no deploy
     setInterval(() => sendAndroidNews(client), 7200000); // Repetir a cada 2 horas
