@@ -5,8 +5,8 @@ import fs from 'fs';
 
 // Lê o arquivo de configuração
 const config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
-const NEWS_API_KEY = 337b6806debe4df1b083f92f768fe2bf; // Chave da API de notícias
-const CHANNEL_ID = 1309897299278696618; // ID do canal
+const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf'; // Chave da API de notícias
+const CHANNEL_ID = '1309897299278696618'; // ID do canal
 const MONGODB_URI = config.mongodb_uri; // URI de conexão do MongoDB
 
 const mongoClient = new MongoClient(MONGODB_URI);
