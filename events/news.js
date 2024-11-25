@@ -32,7 +32,9 @@ async function sendAndroidNews(client) {
     }
 
     if (newsArticles.length > 0) {
-        for (const article of newsArticles.slice(0, 5)) {
+const articlesToSend = newsArticles.slice(0, 1); // Limita a 1 notícia
+for (const article of articlesToSend) {
+
             const embed = new EmbedBuilder()
                 .setColor('#0099ff')
                 .setTitle(article.title)
