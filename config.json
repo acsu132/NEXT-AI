@@ -9,8 +9,7 @@
         "other": true,
         "hentai": false,
         "lavalink": true,
-        "troll": true,
-        "type": "module"
+        "troll": true
 
     },
     "categories": {
