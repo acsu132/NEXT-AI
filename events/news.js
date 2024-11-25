@@ -1,14 +1,22 @@
 import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
-import fetch from 'node-fetch'; // Importação do node-fetch
+import fetch from 'node-fetch'; // Usando import para node-fetch
 import { MongoClient } from 'mongodb';
 import fs from 'fs';
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+// Lê o arquivo de configuração
+const config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
+const NEWS_API_KEY = config.news_api_key; // Chave da API de notícias
+const CHANNEL_ID = config.channel_id; // ID do canal
+const MONGODB_URI = config.mongodb_uri; // URI de conexão do MongoDB
 
-const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf'; // Coloque sua chave da API aqui
-const CHANNEL_ID = '1309897299278696618'; // Coloque o ID do canal onde deseja enviar as notícias
+const mongoClient = new MongoClient(MONGODB_URI);
+let articlesCollection;
 
-const sentArticles = new Set(); // Para armazenar os IDs das notícias já enviadas
+async function connectToMongoDB() {
+    await mongoClient.connect();
+    const database = mongoClient.db('newsBot');
+    articlesCollection = database.collection('sentArticles');
+}
 
 async function fetchNews() {
     const response = await fetch(`https://newsapi.org/v2/everything?q=android&language=pt&apiKey=${NEWS_API_KEY}`);
@@ -18,11 +26,11 @@ async function fetchNews() {
 
 async function sendNews(channel) {
     const articles = await fetchNews();
-    const newArticle = articles.find(article => !sentArticles.has(article.url));
+    const newArticle = articles.find(article => !await articlesCollection.findOne({ url: article.url }));
 
     if (newArticle) {
-        sentArticles.add(newArticle.url);
-        
+        await articlesCollection.insertOne({ url: newArticle.url });
+
         const embed = new EmbedBuilder()
             .setColor('#0099ff')
             .setTitle(newArticle.title)
@@ -41,9 +49,13 @@ async function sendNews(channel) {
     }
 }
 
-client.once('ready', () => {
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+client.once('ready', async () => {
     console.log(`Bot está online como ${client.user.tag}`);
 
+    await connectToMongoDB();
+    
     const channel = client.channels.cache.get(CHANNEL_ID);
     if (!channel) {
         console.error('Canal não encontrado!');
