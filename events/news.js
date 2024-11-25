@@ -1,5 +1,7 @@
-const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
-const fetch = require('node-fetch');
+import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
+import fetch from 'node-fetch'; // Importação do node-fetch
+import { MongoClient } from 'mongodb';
+import fs from 'fs';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
