@@ -10,7 +10,7 @@
         "hentai": false,
         "lavalink": true,
         "troll": true,
-        "type": module
+        "type": "module"
 
     },
     "categories": {
