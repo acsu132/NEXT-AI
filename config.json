@@ -26,6 +26,7 @@
             "port": 6767,
             "password": "danteisnttaken",
             "secure": false
+            "NEWS_API_KEY": "337b6806debe4df1b083f92f768fe2bf",
         }
     },
     "spotifyClientId": "f71a3da30e254962965ca2a89d6f74b9",
