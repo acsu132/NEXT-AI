@@ -660,7 +660,7 @@ diwaliCountdown: 'dias até o Diwali',
 // dussehra.js
 dussehraDescription: 'Exibe o número de dias até o Dussehra.',
 dussehraTitle: '🏹 Dussehra Contagem regressiva',
-dussehraContagem regressiva: 'dias até Dussehra',
+dussehraCountdown: 'dias até Dussehra',
 // holi.js
 holiDescription: 'Exibe o número de dias até Holi.',
 holiTitle: '🎉 Contagem regressiva para Holi',
