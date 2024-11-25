@@ -45,5 +45,12 @@ module.exports = {
         setInterval(() => {
             setActivityAndStatus();
         }, 6000);
+
+client.once('ready', () => {
+    console.log(`Bot online como ${client.user.tag}`);
+    const { startNewsInterval } = require('./events/news.js');
+    startNewsInterval(client);
+});
+
     },
 };
