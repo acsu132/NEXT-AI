@@ -4,9 +4,8 @@
     "prefix": "!",
     "mongodbUri": "mongodb+srv://RTX:GAMING@cluster0.iuzzl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
     "geniusToken": "0CHr9jtPjR7EKraXUVv6__8ELmEwFeUwt5vYAhk-is_fGOq-10-epdMzESkMPUnf",
-    "NEWS_API_KEY": "337b6806debe4df1b083f92f768fe2bf",
-    "excessCommands": {
         "utility": true,
+    "type": "module",
         "other": true,
         "hentai": false,
         "lavalink": false,
