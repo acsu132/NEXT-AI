@@ -1,7 +1,7 @@
-import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
-import fetch from 'node-fetch'; // Usando import para node-fetch
-import { MongoClient } from 'mongodb';
-import fs from 'fs';
+const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const fetch = require('node-fetch');
+const { MongoClient } = require('mongodb');
+const fs = require('fs');
 
 // Especificar diretamente o ID do canal e a chave da API
 const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf'; // Substitua pela sua chave da API
