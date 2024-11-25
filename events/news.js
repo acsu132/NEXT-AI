@@ -1,10 +1,8 @@
-// news.js
 const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
-require('dotenv').config();
 
-const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf';
-const CHANNEL_ID = '1309897299278696618';
+const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf'; // Chave embutida no código
+const CHANNEL_ID = '1309897299278696618'; // Substitua pelo ID do canal
 
 async function fetchAndroidNews() {
     try {
@@ -19,9 +17,11 @@ async function fetchAndroidNews() {
 }
 
 async function sendAndroidNews(client) {
+    console.log('Iniciando envio de notícias...');
     const newsArticles = await fetchAndroidNews();
-    const channel = client.channels.cache.get(CHANNEL_ID);
+    console.log(`Notícias encontradas: ${newsArticles.length}`);
 
+    const channel = client.channels.cache.get(CHANNEL_ID);
     if (!channel) {
         console.error('Canal não encontrado!');
         return;
@@ -44,13 +44,13 @@ async function sendAndroidNews(client) {
             await channel.send({ embeds: [embed] });
         }
     } else {
-        channel.send('Nenhuma notícia encontrada sobre Android.');
+        await channel.send('Nenhuma notícia encontrada sobre Android.');
     }
 }
 
 function startNewsInterval(client) {
-    sendAndroidNews(client); // Enviar imediatamente
-    setInterval(() => sendAndroidNews(client), 7200000); // 2 horas
+    sendAndroidNews(client); // Enviar imediatamente no deploy
+    setInterval(() => sendAndroidNews(client), 7200000); // Repetir a cada 2 horas
 }
 
 module.exports = { startNewsInterval, sendAndroidNews };
