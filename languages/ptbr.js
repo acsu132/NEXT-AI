@@ -725,6 +725,14 @@ aestFieldName: ':flag_au: Sydney (AEST)',
 kstFieldName: ':flag_kr: Seul (KST)',
 worldClockErrorMessage: 'Ocorreu um erro ao recuperar o relógio mundial dados.',
 
-};
 
-module.exports = ptbrLang;
+
+
+
+
+
+    
+  };
+  
+  module.exports = ptbrLang;
+  
