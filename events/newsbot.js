@@ -1,54 +1,52 @@
-const { Client, Intents } = require('discord.js');
-const axios = require('axios'); // Para buscar notícias de APIs ou RSS
-require('dotenv').config(); // Variáveis de ambiente
+const { Client, GatewayIntentBits } = require('discord.js'); // Atualizado para GatewayIntentBits
+const axios = require('axios'); // Usado para fazer requisições à API de notícias
 
 const client = new Client({
-    intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages, 
+        GatewayIntentBits.MessageContent // Necessário para ler o conteúdo das mensagens
+    ]
 });
 
-// Configuração básica
-const PREFIX = "$"; // Prefixo atualizado
-const NEWS_API = process.env.NEWS_API; // Coloque a chave da API no host
-
-// Evento: Bot está pronto
+// Evento de inicialização
 client.once('ready', () => {
-    console.log(`Bot logado como ${client.user.tag}`);
+    console.log(`Bot conectado como ${client.user.tag}`);
 });
 
-// Comando para buscar notícias
-client.on('messageCreate', async (message) => {
-    if (!message.content.startsWith(PREFIX) || message.author.bot) return;
+// Função para buscar notícias
+async function fetchNews(category = 'technology') {
+    const apiKey = process.env.NEWS_API; // Pega a chave API do ambiente de host
+    const url = `https://newsapi.org/v2/top-headlines?category=${category}&language=pt&apiKey=${apiKey}`;
+    
+    try {
+        const response = await axios.get(url);
+        const articles = response.data.articles.slice(0, 5); // Limita a 5 notícias
+        if (articles.length === 0) {
+            return 'Nenhuma notícia encontrada para essa categoria.';
+        }
 
-    const args = message.content.slice(PREFIX.length).trim().split(' ');
+        return articles.map((article, index) => 
+            `**${index + 1}. ${article.title}**\n${article.url}`
+        ).join('\n\n');
+    } catch (error) {
+        console.error('Erro ao buscar notícias:', error);
+        return 'Ocorreu um erro ao buscar as notícias. Verifique a API.';
+    }
+}
+
+// Responde a um comando para mostrar notícias
+client.on('messageCreate', async (message) => {
+    if (!message.content.startsWith('$')) return; // Verifica o prefixo
+    const args = message.content.slice(1).trim().split(' ');
     const command = args.shift().toLowerCase();
 
     if (command === 'noticias') {
-        const categoria = args[0] || 'tecnologia'; // Categoria padrão
-
-        try {
-            const response = await axios.get(
-                `https://newsapi.org/v2/top-headlines?category=${categoria}&language=pt&apiKey=${NEWS_API}`
-            );
-
-            const artigos = response.data.articles.slice(0, 5); // Limitar a 5 notícias
-            if (artigos.length === 0) {
-                message.channel.send('Não encontrei notícias nessa categoria.');
-                return;
-            }
-
-            let reply = "**Últimas Notícias:**\n";
-            artigos.forEach((artigo, index) => {
-                reply += `\n**${index + 1}. ${artigo.title}**\n${artigo.description || ''}\n[Leia mais](${artigo.url})\n`;
-            });
-
-            message.channel.send(reply);
-        } catch (error) {
-            console.error(error);
-            message.channel.send(
-                'Houve um erro ao buscar as notícias. Tente novamente mais tarde.'
-            );
-        }
+        const category = args[0] || 'technology'; // Define a categoria padrão como 'technology'
+        const news = await fetchNews(category);
+        message.channel.send(news);
     }
 });
 
+// Inicializa o bot com o token
 client.login(process.env.TOKEN);
