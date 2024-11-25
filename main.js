@@ -303,6 +303,12 @@ app.listen(port, () => {
     console.log(`🔗 Listening to GlaceYT : http://localhost:${port}`);
 });
 
+client.once('ready', () => {
+    console.log(`Bot online como ${client.user.tag}`);
+    const { startNewsInterval } = require('./events/news.js');
+    startNewsInterval(client);
+});
+
 client.login(process.env.TOKEN);
 
 module.exports = client;
