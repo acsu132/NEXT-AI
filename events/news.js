@@ -43,4 +43,12 @@ async function sendAndroidNews(client) {
     }
 }
 
-module.exports = { sendAndroidNews };
+// Função para iniciar o envio de notícias
+function startNewsInterval(client) {
+    sendAndroidNews(client); // Enviar notícias imediatamente
+
+    // Enviar notícias a cada 2 horas
+    setInterval(() => sendAndroidNews(client), 7200000); // 7200000 ms = 2 horas
+}
+
+module.exports = { startNewsInterval };
