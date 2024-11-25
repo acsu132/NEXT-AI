@@ -5,8 +5,8 @@ import fs from 'fs';
 
 // Lê o arquivo de configuração
 const config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
-const NEWS_API_KEY = config.news_api_key; // Chave da API de notícias
-const CHANNEL_ID = '1309897299278696618'; // ID do canal
+const NEWS_API_KEY = 337b6806debe4df1b083f92f768fe2bf; // Chave da API de notícias
+const CHANNEL_ID = 1309897299278696618; // ID do canal
 const MONGODB_URI = config.mongodb_uri; // URI de conexão do MongoDB
 
 const mongoClient = new MongoClient(MONGODB_URI);
@@ -26,7 +26,15 @@ async function fetchNews() {
 
 async function sendNews(channel) {
     const articles = await fetchNews();
-    const newArticle = articles.find(article => !await articlesCollection.findOne({ url: article.url }));
+    let newArticle = null;
+
+    for (const article of articles) {
+        const exists = await articlesCollection.findOne({ url: article.url });
+        if (!exists) {
+            newArticle = article;
+            break; // Encontrou um artigo novo, pode sair do loop
+        }
+    }
 
     if (newArticle) {
         await articlesCollection.insertOne({ url: newArticle.url });
