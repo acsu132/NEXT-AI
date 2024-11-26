@@ -3,7 +3,7 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect('mongodb+srv://RTX:GAMING@cluster0.iuzzl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 }).then(() => {
