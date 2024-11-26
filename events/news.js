@@ -1,8 +1,24 @@
 const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
+const { MongoClient } = require('mongodb');
+const config = require('./config.json');
 
-const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf'; // Chave embutida no código
-const CHANNEL_ID = '1309897299278696618'; // Substitua pelo ID do canal
+const NEWS_API_KEY = config.newsApiKey;
+const CHANNEL_ID = config.channelId;
+const MONGO_URI = config.mongoURI;
+const DB_NAME = 'newsBotDB';
+const COLLECTION_NAME = 'sentArticles';
+
+let dbCollection;
+
+// Função para conectar ao MongoDB
+async function connectToDB() {
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    console.log('Conectado ao MongoDB!');
+    const db = client.db(DB_NAME);
+    dbCollection = db.collection(COLLECTION_NAME);
+}
 
 // Função para buscar notícias
 async function fetchAndroidNews() {
@@ -11,7 +27,7 @@ async function fetchAndroidNews() {
             params: {
                 q: 'android',
                 apiKey: NEWS_API_KEY,
-                language: 'pt', // Adiciona idioma português
+                language: 'pt',
             },
         });
         return response.data.articles;
@@ -34,8 +50,20 @@ async function sendAndroidNews(client) {
     }
 
     if (newsArticles.length > 0) {
-        const articlesToSend = newsArticles.slice(0, 1); // Limita a 1 notícia
-        for (const article of articlesToSend) {
+        const articlesToSend = [];
+        for (const article of newsArticles) {
+            const alreadySent = await dbCollection.findOne({ url: article.url });
+            if (!alreadySent) {
+                articlesToSend.push(article);
+            }
+        }
+
+        if (articlesToSend.length === 0) {
+            console.log('Nenhuma notícia nova para enviar.');
+            return;
+        }
+
+        for (const article of articlesToSend.slice(0, 1)) { // Enviar até 1 nova notícia
             const embed = new EmbedBuilder()
                 .setColor('#0099ff')
                 .setTitle(article.title)
@@ -49,6 +77,9 @@ async function sendAndroidNews(client) {
                 .setFooter({ text: 'Notícias sobre Android' });
 
             await channel.send({ embeds: [embed] });
+
+            // Registrar a URL no banco como enviada
+            await dbCollection.insertOne({ url: article.url, dateSent: new Date() });
         }
     } else {
         await channel.send('Nenhuma notícia encontrada sobre Android.');
@@ -61,4 +92,5 @@ function startNewsInterval(client) {
     setInterval(() => sendAndroidNews(client), 7200000); // Repetir a cada 2 horas
 }
 
-module.exports = { startNewsInterval, sendAndroidNews };
+// Exportar a função principal
+module.exports = { connectToDB, startNewsInterval, sendAndroidNews };
