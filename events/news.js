@@ -1,102 +1,185 @@
-const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
+
 const axios = require('axios');
-const mongoose = require('mongoose');
 
-// Conectar ao MongoDB
-mongoose.connect('mongodb+srv://RTX:GAMING@cluster0.iuzzl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-}).then(() => {
-    console.log('Conectado ao MongoDB!');
-}).catch(err => {
-    console.error('Erro ao conectar ao MongoDB:', err.message);
-});
+const fs = require('fs');
 
-// Definir o schema para armazenar configurações de servidor (como a última checagem)
-const newsSettingsSchema = new mongoose.Schema({
-    serverId: { type: String, required: true },
-    lastChecked: { type: Date, required: true },
-});
+const path = require('path');
 
-const NewsSettings = mongoose.model('NewsSettings', newsSettingsSchema);
 
-const CHANNEL_ID = '1309897299278696618'; // ID do canal onde as notícias serão enviadas
-const SENT_ARTICLES = new Set(); // Armazena URLs de notícias já enviadas
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+// Config.json
 
-client.on('ready', async () => {
-    console.log('Bot está pronto!');
-    
-    // Enviar notícias imediatamente e definir intervalo regular para checar notícias
-    await sendAndroidNews();
-    setInterval(() => sendAndroidNews(), 7200000); // A cada 2 horas
-});
+const configPath = path.resolve(__dirname, 'config.json');
 
-async function fetchAndroidNews() {
-    try {
-        const response = await axios.get('https://newsapi.org/v2/everything', {
-            params: {
-                q: 'android',
-                apiKey: process.env.NEWS_API, // Usa a variável de ambiente para a API Key
-                language: 'pt',
-            },
-        });
-        return response.data.articles;
-    } catch (error) {
-        console.error('Erro ao buscar notícias:', error.message);
-        return [];
-    }
+if (!fs.existsSync(configPath)) {
+
+    console.error('Arquivo config.json não encontrado!');
+
+    process.exit(1);
+
 }
 
-async function sendAndroidNews() {
+const config = require(configPath);
+
+
+
+const NEWS_API_KEY = config.newsApiKey; // A chave da API está no arquivo config.json
+
+const CHANNEL_ID = '1309897299278696618'; // ID do canal
+
+const SENT_ARTICLES = new Set(); // Armazenamento
+
+
+
+// buscar notícias
+
+async function fetchAndroidNews() {
+
+    try {
+
+        const response = await axios.get('https://newsapi.org/v2/everything', {
+
+            params: {
+
+                q: 'android',
+
+                apiKey: NEWS_API_KEY,
+
+                language: config.language || 'pt', // configuração de idioma
+
+            },
+
+        });
+
+        return response.data.articles;
+
+    } catch (error) {
+
+        console.error('Erro ao buscar notícias:', error);
+
+        return [];
+
+    }
+
+}
+
+
+
+// para enviar notícias
+
+async function sendAndroidNews(client) {
+
+    console.log('Iniciando envio de notícias...');
+
     const newsArticles = await fetchAndroidNews();
+
+    console.log(`Notícias encontradas: ${newsArticles.length}`);
+
+
+
     const channel = client.channels.cache.get(CHANNEL_ID);
 
     if (!channel) {
-        console.error('Canal de notícias não encontrado!');
+
+        console.error('Canal não encontrado!');
+
         return;
+
     }
 
-    const articlesToSend = [];
 
-    for (const article of newsArticles) {
-        if (SENT_ARTICLES.has(article.url)) {
-            continue; // Ignora notícias já enviadas
+
+    if (newsArticles.length > 0) {
+
+        const articlesToSend = [];
+
+        
+
+        for (const article of newsArticles) {
+
+            // Olha se a notícia já foi enviada um tempo atrás 
+
+            if (SENT_ARTICLES.has(article.url)) {
+
+                console.log(`Notícia repetida encontrada, ignorando: ${article.title}`);
+
+                continue; // Ignorar se essa for repetida
+
+            }
+
+
+
+            // marca a notícia como enviada
+
+            SENT_ARTICLES.add(article.url);
+
+
+
+            articlesToSend.push(article);
+
         }
 
-        SENT_ARTICLES.add(article.url);
-        articlesToSend.push(article);
-    }
 
-    if (articlesToSend.length > 0) {
-        for (const article of articlesToSend) {
-            const embed = new EmbedBuilder()
-                .setColor('#0099ff')
-                .setTitle(article.title)
-                .setURL(article.url)
-                .setDescription(article.description || 'Sem descrição disponível.')
-                .setThumbnail(article.urlToImage || 'https://via.placeholder.com/150')
-                .addFields(
-                    { name: 'Fonte', value: article.source.name, inline: true },
-                    { name: 'Data', value: new Date(article.publishedAt).toLocaleString(), inline: true }
-                )
-                .setFooter({ text: 'Notícias sobre Android' });
 
-            await channel.send({ embeds: [embed] });
+        if (articlesToSend.length > 0) {
+
+            for (const article of articlesToSend) {
+
+                const embed = new EmbedBuilder()
+
+                    .setColor('#0099ff')
+
+                    .setTitle(article.title)
+
+                    .setURL(article.url)
+
+                    .setDescription(article.description || 'Sem descrição disponível.')
+
+                    .setThumbnail(article.urlToImage || 'https://via.placeholder.com/150')
+
+                    .addFields(
+
+                        { name: 'Fonte', value: article.source.name, inline: true },
+
+                        { name: 'Data', value: new Date(article.publishedAt).toLocaleString(), inline: true }
+
+                    )
+
+                    .setFooter({ text: 'Notícias sobre Android' });
+
+
+
+                await channel.send({ embeds: [embed] });
+
+            }
+
+        } else {
+
+            await channel.send('Nenhuma nova notícia encontrada sobre Android.');
+
         }
 
-        // Armazenar a última checagem de notícias no MongoDB
-        const serverId = channel.guild.id;
-        await NewsSettings.updateOne(
-            { serverId },
-            { $set: { lastChecked: new Date() } },
-            { upsert: true } // Cria o documento caso ele não exista
-        );
     } else {
-        await channel.send('Nenhuma nova notícia sobre Android foi encontrada.');
+
+        await channel.send('Nenhuma notícia encontrada sobre Android.');
+
     }
+
 }
 
-// Login do bot
-client.login(process.env.TOKEN);
+
+
+// Função para intervalos automáticos
+
+function startNewsInterval(client) {
+
+    sendAndroidNews(client); // Enviar imediatamente no deploy
+
+    setInterval(() => sendAndroidNews(client), 7200000); // Repetir a cada 2 horas
+
+}
+
+
+
+module.exports = { startNewsInterval, sendAndroidNews };
