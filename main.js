@@ -309,7 +309,19 @@ client.once('ready', () => {
     startNewsInterval(client);
 });
 
+const { Client, GatewayIntentBits } = require('discord.js');
+require('dotenv').config(); // Carrega as variáveis de ambiente do .env
 
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+// Carrega os módulos
+require('./modules/news')(client); // Carrega o módulo de notícias
+
+client.once('ready', () => {
+    console.log(`Bot iniciado como ${client.user.tag}`);
+});
+
+// Faz login no bot usando o token
 client.login(process.env.TOKEN);
 
 module.exports = client;
