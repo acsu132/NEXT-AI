@@ -6,7 +6,7 @@ require('dotenv').config(); // Usar variáveis de ambiente para o token
 // Configuração
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN; // Somente o token do bot está no .env
 const MONGO_URI = 'mongodb://localhost:27017'; // URI do MongoDB (fixo no código)
-const NEWS_API_KEY = 'sua_chave_newsapi_aqui'; // Substitua pela sua chave da NewsAPI
+const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf'; // Substitua pela sua chave da NewsAPI
 const CHANNEL_ID = '1309897299278696618'; // Substitua pelo ID do canal
 const LANGUAGE = 'pt'; // Idioma das notícias
 
