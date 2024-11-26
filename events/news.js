@@ -2,37 +2,15 @@ const { EmbedBuilder } = require('discord.js');
 
 const axios = require('axios');
 
-const fs = require('fs');
-
-const path = require('path');
 
 
+const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf'; // Chave embutida no código
 
-// Config.json
-
-const configPath = path.resolve(__dirname, 'config.json');
-
-if (!fs.existsSync(configPath)) {
-
-    console.error('Arquivo config.json não encontrado!');
-
-    process.exit(1);
-
-}
-
-const config = require(configPath);
+const CHANNEL_ID = '1309897299278696618'; // Substitua pelo ID do canal
 
 
 
-const NEWS_API_KEY = config.newsApiKey; // A chave da API está no arquivo config.json
-
-const CHANNEL_ID = '1309897299278696618'; // ID do canal
-
-const SENT_ARTICLES = new Set(); // Armazenamento
-
-
-
-// buscar notícias
+// Função para buscar notícias
 
 async function fetchAndroidNews() {
 
@@ -46,7 +24,7 @@ async function fetchAndroidNews() {
 
                 apiKey: NEWS_API_KEY,
 
-                language: config.language || 'pt', // configuração de idioma
+                language: 'pt', // Adiciona idioma português
 
             },
 
@@ -66,7 +44,7 @@ async function fetchAndroidNews() {
 
 
 
-// para enviar notícias
+// Função para enviar notícias
 
 async function sendAndroidNews(client) {
 
@@ -92,71 +70,35 @@ async function sendAndroidNews(client) {
 
     if (newsArticles.length > 0) {
 
-        const articlesToSend = [];
+        const articlesToSend = newsArticles.slice(0, 1); // Limita a 1 notícia
 
-        
+        for (const article of articlesToSend) {
 
-        for (const article of newsArticles) {
+            const embed = new EmbedBuilder()
 
-            // Olha se a notícia já foi enviada um tempo atrás 
+                .setColor('#0099ff')
 
-            if (SENT_ARTICLES.has(article.url)) {
+                .setTitle(article.title)
 
-                console.log(`Notícia repetida encontrada, ignorando: ${article.title}`);
+                .setURL(article.url)
 
-                continue; // Ignorar se essa for repetida
+                .setDescription(article.description || 'Sem descrição disponível.')
 
-            }
+                .setThumbnail(article.urlToImage || 'https://via.placeholder.com/150')
 
+                .addFields(
 
+                    { name: 'Fonte', value: article.source.name, inline: true },
 
-            // marca a notícia como enviada
+                    { name: 'Data', value: new Date(article.publishedAt).toLocaleString(), inline: true }
 
-            SENT_ARTICLES.add(article.url);
+                )
 
-
-
-            articlesToSend.push(article);
-
-        }
+                .setFooter({ text: 'Notícias sobre Android' });
 
 
 
-        if (articlesToSend.length > 0) {
-
-            for (const article of articlesToSend) {
-
-                const embed = new EmbedBuilder()
-
-                    .setColor('#0099ff')
-
-                    .setTitle(article.title)
-
-                    .setURL(article.url)
-
-                    .setDescription(article.description || 'Sem descrição disponível.')
-
-                    .setThumbnail(article.urlToImage || 'https://via.placeholder.com/150')
-
-                    .addFields(
-
-                        { name: 'Fonte', value: article.source.name, inline: true },
-
-                        { name: 'Data', value: new Date(article.publishedAt).toLocaleString(), inline: true }
-
-                    )
-
-                    .setFooter({ text: 'Notícias sobre Android' });
-
-
-
-                await channel.send({ embeds: [embed] });
-
-            }
-
-        } else {
-
-            await channel.send('Nenhuma nova notícia encontrada sobre Android.');
+            await channel.send({ embeds: [embed] });
 
         }
 
