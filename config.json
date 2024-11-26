@@ -4,6 +4,7 @@
     "prefix": "$",
     "mongodbUri": "mongodb+srv://RTX:GAMING@cluster0.iuzzl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
     "geniusToken": "0CHr9jtPjR7EKraXUVv6__8ELmEwFeUwt5vYAhk-is_fGOq-10-epdMzESkMPUnf",
+    "newsApiKey": "337b6806debe4df1b083f92f768fe2bf"
     "excessCommands": {
         "utility": true,
         "other": true,
@@ -31,8 +32,5 @@
     }, 
     "spotifyClientId": "f71a3da30e254962965ca2a89d6f74b9",
     "spotifyClientSecret": "199a619d22dd4e55a4a2c1a7a3d70e63"
-},
-
-{
-  "newsApiKey": "337b6806debe4df1b083f92f768fe2bf",
 }
+
