@@ -3,20 +3,17 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Caminho para o arquivo config.json
-const configPath = path.join(__dirname, 'config.json');
-
-// Verifique se o arquivo realmente existe
+// Carregar a configuração do arquivo config.json
+const configPath = path.resolve(__dirname, 'config.json');
 if (!fs.existsSync(configPath)) {
     console.error('Arquivo config.json não encontrado!');
-    process.exit(1); // Finaliza o processo se o arquivo não for encontrado
+    process.exit(1);
 }
-
 const config = require(configPath);
 
-// Configurações do arquivo config.json
-const NEWS_API_KEY = config.geniusToken; // Substituir pela chave da API correta se necessário
+const NEWS_API_KEY = config.newsApiKey; // A chave da API agora está no arquivo config.json
 const CHANNEL_ID = '1309897299278696618'; // Substitua pelo ID do canal
+const SENT_ARTICLES = new Set(); // Usado para armazenar URLs das notícias já enviadas
 
 // Função para buscar notícias
 async function fetchAndroidNews() {
@@ -25,7 +22,7 @@ async function fetchAndroidNews() {
             params: {
                 q: 'android',
                 apiKey: NEWS_API_KEY,
-                language: config.language, // Usar o idioma configurado
+                language: config.language || 'pt', // Usando a configuração de idioma do arquivo
             },
         });
         return response.data.articles;
@@ -36,7 +33,7 @@ async function fetchAndroidNews() {
 }
 
 // Função para enviar notícias
-async function sendAndroidNews(client, lastNews) {
+async function sendAndroidNews(client) {
     console.log('Iniciando envio de notícias...');
     const newsArticles = await fetchAndroidNews();
     console.log(`Notícias encontradas: ${newsArticles.length}`);
@@ -48,39 +45,49 @@ async function sendAndroidNews(client, lastNews) {
     }
 
     if (newsArticles.length > 0) {
-        // Filtra as notícias para não enviar as mesmas já enviadas
-        const newArticles = newsArticles.filter(article => !lastNews.includes(article.url));
-        if (newArticles.length === 0) {
-            console.log('Nenhuma nova notícia encontrada.');
-            return;
+        const articlesToSend = [];
+        
+        for (const article of newsArticles) {
+            // Verificar se a notícia já foi enviada
+            if (SENT_ARTICLES.has(article.url)) {
+                console.log(`Notícia repetida encontrada, ignorando: ${article.title}`);
+                continue; // Ignorar notícias repetidas
+            }
+
+            // Marcar a notícia como enviada
+            SENT_ARTICLES.add(article.url);
+
+            articlesToSend.push(article);
         }
 
-        const articleToSend = newArticles[0]; // Envia a primeira nova notícia
-        const embed = new EmbedBuilder()
-            .setColor('#0099ff')
-            .setTitle(articleToSend.title)
-            .setURL(articleToSend.url)
-            .setDescription(articleToSend.description || 'Sem descrição disponível.')
-            .setThumbnail(articleToSend.urlToImage || 'https://via.placeholder.com/150')
-            .addFields(
-                { name: 'Fonte', value: articleToSend.source.name, inline: true },
-                { name: 'Data', value: new Date(articleToSend.publishedAt).toLocaleString(), inline: true }
-            )
-            .setFooter({ text: 'Notícias sobre Android' });
+        if (articlesToSend.length > 0) {
+            for (const article of articlesToSend) {
+                const embed = new EmbedBuilder()
+                    .setColor('#0099ff')
+                    .setTitle(article.title)
+                    .setURL(article.url)
+                    .setDescription(article.description || 'Sem descrição disponível.')
+                    .setThumbnail(article.urlToImage || 'https://via.placeholder.com/150')
+                    .addFields(
+                        { name: 'Fonte', value: article.source.name, inline: true },
+                        { name: 'Data', value: new Date(article.publishedAt).toLocaleString(), inline: true }
+                    )
+                    .setFooter({ text: 'Notícias sobre Android' });
 
-        await channel.send({ embeds: [embed] });
-        // Armazena a URL da notícia para evitar repetição
-        lastNews.push(articleToSend.url);
+                await channel.send({ embeds: [embed] });
+            }
+        } else {
+            await channel.send('Nenhuma nova notícia encontrada sobre Android.');
+        }
     } else {
         await channel.send('Nenhuma notícia encontrada sobre Android.');
     }
 }
 
 // Função para intervalos automáticos
-async function startNewsInterval(client) {
-    let lastNews = []; // Lista de URLs já enviadas para evitar repetição
-    sendAndroidNews(client, lastNews); // Enviar imediatamente no deploy
-    setInterval(() => sendAndroidNews(client, lastNews), 7200000); // Repetir a cada 2 horas
+function startNewsInterval(client) {
+    sendAndroidNews(client); // Enviar imediatamente no deploy
+    setInterval(() => sendAndroidNews(client), 7200000); // Repetir a cada 2 horas
 }
 
 module.exports = { startNewsInterval, sendAndroidNews };
