@@ -309,11 +309,6 @@ client.once('ready', () => {
     startNewsInterval(client);
 });
 
-const { Client, GatewayIntentBits } = require('discord.js');
-require('dotenv').config(); // Carrega as variáveis de ambiente do .env
-
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
 // Carrega os módulos
 require('./modules/news')(client); // Carrega o módulo de notícias
 
