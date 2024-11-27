@@ -306,7 +306,7 @@ const androidNews = require('./androidNews');
 
 // Inicializar o módulo
 androidNews.init(client);
-    }
+    
 });
 
 
