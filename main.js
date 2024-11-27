@@ -303,10 +303,10 @@ app.listen(port, () => {
     console.log(`🔗 Listening to GlaceYT : http://localhost:${port}`);
 });
 
-const androidNews = require('./News');
+const news = require('./news');
 
 // Inicializar o módulo
-News.init(client);
+news.init(client);
 
 client.login(process.env.TOKEN);
 
