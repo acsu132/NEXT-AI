@@ -301,7 +301,6 @@ app.get('/', (req, res) => {
 });
 app.listen(port, () => {
     console.log(`🔗 Listening to GlaceYT : http://localhost:${port}`);
-});
 
 
 const androidNews = require('./androidNews');
@@ -309,7 +308,6 @@ const androidNews = require('./androidNews');
 // Inicializar o módulo
 androidNews.init(client);
     
-});
 
 
 
