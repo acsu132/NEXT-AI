@@ -5,14 +5,19 @@ const axios = require('axios');
 const CHANNEL_ID = '1309897299278696618'; 
 const SENT_ARTICLES = new Set(); // Armazena URLs de notícias já enviadas
 
-module.exports = (client) => {
-    client.on('ready', async () => {
-        console.log('Módulo de notícias sobre Android inicializado.');
-
-        // Envia notícias imediatamente e define intervalos regulares
-        await enviarNoticiasAndroid(client);
-        setInterval(() => enviarNoticiasAndroid(client), 7200000); // A cada 2 horas
-    });
+module.exports = {
+    init: (client) => {
+        client.on('ready', async () => {
+            console.log('Módulo de notícias sobre Android inicializado.');
+            
+            // Primeiro envio após 5 segundos
+            setTimeout(() => enviarNoticiasAndroid(client), 5000);
+            
+            // Envio regular a cada 2 horas
+            setInterval(() => enviarNoticiasAndroid(client), 7200000);
+        });
+    },
+    enviarNoticiasAndroid, // Exportando a função
 };
 
 // Função para buscar notícias
