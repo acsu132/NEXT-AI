@@ -1,127 +1,67 @@
 const { EmbedBuilder } = require('discord.js');
-
 const axios = require('axios');
 
+// ID do canal onde as notícias serão enviadas
+const CHANNEL_ID = '1309897299278696618'; 
+const SENT_ARTICLES = new Set(); // Armazena URLs de notícias já enviadas
 
+module.exports = (client) => {
+    client.on('ready', async () => {
+        console.log('Módulo de notícias sobre Android inicializado.');
 
-const NEWS_API_KEY = '337b6806debe4df1b083f92f768fe2bf'; // Chave embutida no código
-
-const CHANNEL_ID = '1309897299278696618'; // Substitua pelo ID do canal
-
-
+        // Envia notícias imediatamente e define intervalos regulares
+        await enviarNoticiasAndroid(client);
+        setInterval(() => enviarNoticiasAndroid(client), 7200000); // A cada 2 horas
+    });
+};
 
 // Função para buscar notícias
-
-async function fetchAndroidNews() {
-
+async function buscarNoticiasAndroid() {
     try {
-
         const response = await axios.get('https://newsapi.org/v2/everything', {
-
             params: {
-
                 q: 'android',
-
-                apiKey: NEWS_API_KEY,
-
-                language: 'pt', // Adiciona idioma português
-
+                apiKey: '337b6806debe4df1b083f92f768fe2bf', // Variável de ambiente para a chave da API
+                language: 'pt',
             },
-
         });
-
         return response.data.articles;
-
     } catch (error) {
-
-        console.error('Erro ao buscar notícias:', error);
-
+        console.error('Erro ao buscar notícias:', error.message);
         return [];
-
     }
-
 }
-
-
 
 // Função para enviar notícias
+async function enviarNoticiasAndroid(client) {
+    const noticias = await buscarNoticiasAndroid();
+    const canal = client.channels.cache.get(CHANNEL_ID);
 
-async function sendAndroidNews(client) {
-
-    console.log('Iniciando envio de notícias...');
-
-    const newsArticles = await fetchAndroidNews();
-
-    console.log(`Notícias encontradas: ${newsArticles.length}`);
-
-
-
-    const channel = client.channels.cache.get(CHANNEL_ID);
-
-    if (!channel) {
-
-        console.error('Canal não encontrado!');
-
+    if (!canal) {
+        console.error('Canal de notícias não encontrado!');
         return;
-
     }
 
-
-
-    if (newsArticles.length > 0) {
-
-        const articlesToSend = newsArticles.slice(0, 1); // Limita a 1 notícia
-
-        for (const article of articlesToSend) {
-
-            const embed = new EmbedBuilder()
-
-                .setColor('#0099ff')
-
-                .setTitle(article.title)
-
-                .setURL(article.url)
-
-                .setDescription(article.description || 'Sem descrição disponível.')
-
-                .setThumbnail(article.urlToImage || 'https://via.placeholder.com/150')
-
-                .addFields(
-
-                    { name: 'Fonte', value: article.source.name, inline: true },
-
-                    { name: 'Data', value: new Date(article.publishedAt).toLocaleString(), inline: true }
-
-                )
-
-                .setFooter({ text: 'Notícias sobre Android' });
-
-
-
-            await channel.send({ embeds: [embed] });
-
+    for (const noticia of noticias) {
+        if (SENT_ARTICLES.has(noticia.url)) {
+            continue; // Ignorar notícias já enviadas
         }
 
-    } else {
+        SENT_ARTICLES.add(noticia.url);
 
-        await channel.send('Nenhuma notícia encontrada sobre Android.');
+        const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle(noticia.title)
+            .setURL(noticia.url)
+            .setDescription(noticia.description || 'Sem descrição disponível.')
+            .setThumbnail(noticia.urlToImage || 'https://via.placeholder.com/150')
+            .addFields(
+                { name: 'Fonte', value: noticia.source.name, inline: true },
+                { name: 'Data', value: new Date(noticia.publishedAt).toLocaleString(), inline: true }
+            )
+            .setFooter({ text: 'Notícias sobre Android' });
 
+        await canal.send({ embeds: [embed] });
+        break; // Envia apenas uma notícia por vez
     }
-
 }
-
-
-
-// Função para intervalos automáticos
-
-function startNewsInterval(client) {
-
-    sendAndroidNews(client); // Enviar imediatamente no deploy
-
-    setInterval(() => sendAndroidNews(client), 7200000); // Repetir a cada 2 horas
-
-}
-
-
-
-module.exports = { startNewsInterval, sendAndroidNews };
