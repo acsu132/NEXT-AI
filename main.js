@@ -309,7 +309,7 @@ const androidNews = require('./androidNews');
 androidNews.init(client);
     
 
-
+}
 
 client.login(process.env.TOKEN);
 
