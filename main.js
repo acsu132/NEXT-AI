@@ -304,13 +304,8 @@ app.listen(port, () => {
 });
 const androidNews = require('./androidNews');
 
-const { enviarNoticiasAndroid } = require('./androidNews');
-
-// Teste manualmente (adicionar como comando ou evento temporário)
-client.on('messageCreate', async (message) => {
-    if (message.content === '!testeNoticia') {
-        await enviarNoticiasAndroid(client);
-        message.reply('Notícia enviada!');
+// Inicializar o módulo
+androidNews.init(client);
     }
 });
 
