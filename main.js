@@ -303,6 +303,13 @@ app.listen(port, () => {
     console.log(`🔗 Listening to GlaceYT : http://localhost:${port}`);
 });
 
+client.on('ready', async () => {
+    console.log('Módulo de notícias sobre Android inicializado.');
+    
+    setTimeout(() => enviarNoticiasAndroid(client), 5000); // Aguarde 5 segundos antes de enviar
+    setInterval(() => enviarNoticiasAndroid(client), 7200000); // A cada 2 horas
+});
+
 
 
 client.login(process.env.TOKEN);
