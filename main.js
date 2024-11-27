@@ -301,18 +301,13 @@ app.get('/', (req, res) => {
 });
 app.listen(port, () => {
     console.log(`🔗 Listening to GlaceYT : http://localhost:${port}`);
-
+});
 
 const androidNews = require('./androidNews');
 
 // Inicializar o módulo
 androidNews.init(client);
-    
-
-}
 
 client.login(process.env.TOKEN);
 
 module.exports = client;
-
-    
