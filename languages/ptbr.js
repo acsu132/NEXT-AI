@@ -1,4 +1,4 @@
-const enLang = {
+const ptbrLang = {
 error: 'Ocorreu um erro ao processar seu comando.',
 commandDisabled: 'Este comando está desabilitado no momento.',
 //avatar.js
@@ -727,4 +727,4 @@ worldClockErrorMessage: 'Há ocorreu um erro ao recuperar os dados do relógio m
 
 };
 
-module.exports = enLang;
+module.exports = ptbrLang;
