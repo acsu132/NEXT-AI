@@ -22,13 +22,12 @@
         "setups": true
     },
     "lavalink": {
-        "{
-  "identifier": "Elf V4 Lights.out.",
-  "password": "LightsoutOwnsElves",
-  "host": "LavaLink4.lightsout.in",
-  "port": 40069,
-  "secure": false
-}
+        "lavalink": {
+            "host": "lava.catfein.com",
+            "port": 4000,
+            "password": "catfein",
+            "secure": false
+        }
     },
     "spotifyClientId": "f71a3da30e254962965ca2a89d6f74b9",
     "spotifyClientSecret": "199a619d22dd4e55a4a2c1a7a3d70e63"
