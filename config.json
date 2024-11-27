@@ -23,9 +23,9 @@
     },
     "lavalink": {
         "lavalink": {
-            "host": "lava.catfein.com",
-            "port": 4000,
-            "password": "catfein",
+            "host": "LavaLink4.lightsout.in",
+            "port": 40069,
+            "password": "LightsoutOwnsElves",
             "secure": false
         }
     },
