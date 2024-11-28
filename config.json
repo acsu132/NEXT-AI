@@ -23,9 +23,9 @@
     },
     "lavalink": {
         "lavalink": {
-            "host": "LavaLink4.lightsout.in",
-            "port": 40069,
-            "password": "LightsoutOwnsElves",
+            "host": "212.227.65.132",
+            "port": 10296,
+            "password": "charlesnaig-lavalink",
             "secure": false
         }
     },
