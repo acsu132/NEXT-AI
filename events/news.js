@@ -60,7 +60,8 @@ async function enviarNoticiasAndroid(client) {
             .setColor('#42f590')
             .setTitle(noticia.title)
             .setURL(noticia.url)
-            .setDescription(noticia.description || 'Sem descrição disponível.')
+            .setDescription(noticia.description || 'Sem descrição disponível.
+||<@&1284872178562502678>||')
             .setImage(noticia.urlToImage || 'https://via.placeholder.com/600x400') // Exibe a imagem principal
             .addFields(
                 { name: 'Fonte', value: noticia.source.name, inline: true },
