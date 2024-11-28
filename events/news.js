@@ -61,6 +61,7 @@ async function enviarNoticiasAndroid(client) {
             .setTitle(noticia.title)
             .setURL(noticia.url)
             .setDescription(noticia.description || 'Sem descrição disponível.
+
 ||<@&1284872178562502678>||')
             .setImage(noticia.urlToImage || 'https://via.placeholder.com/600x400') // Exibe a imagem principal
             .addFields(
