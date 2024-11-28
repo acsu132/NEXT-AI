@@ -61,7 +61,7 @@ async function enviarNoticiasAndroid(client) {
             .setTitle(noticia.title)
             .setURL(noticia.url)
             .setDescription(noticia.description || 'Sem descrição disponível.')
-            .setThumbnail(noticia.urlToImage || 'https://via.placeholder.com/150')
+            .setImage(noticia.urlToImage || 'https://via.placeholder.com/600x400') // Exibe a imagem principal
             .addFields(
                 { name: 'Fonte', value: noticia.source.name, inline: true },
                 { name: 'Data', value: new Date(noticia.publishedAt).toLocaleString(), inline: true }
@@ -73,4 +73,8 @@ async function enviarNoticiasAndroid(client) {
         break; // Envia apenas uma notícia por vez
     }
 
+    // Loga a mensagem em vez de enviá-la no canal
+    if (!noticiaEnviada) {
+        console.log('Nenhuma nova notícia sobre Android foi encontrada.');
+    }
 }
