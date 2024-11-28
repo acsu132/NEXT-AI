@@ -73,8 +73,4 @@ async function enviarNoticiasAndroid(client) {
         break; // Envia apenas uma notícia por vez
     }
 
-    // Loga a mensagem em vez de enviá-la no canal
-    if (!noticiaEnviada) {
-        console.log('Nenhuma nova notícia sobre Android foi encontrada.');
-    }
 }
