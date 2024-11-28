@@ -47,6 +47,8 @@ async function enviarNoticiasAndroid(client) {
         return;
     }
 
+    let noticiaEnviada = false; // Variável para rastrear se uma notícia foi enviada
+
     for (const noticia of noticias) {
         if (SENT_ARTICLES.has(noticia.url)) {
             continue; // Ignorar notícias já enviadas
@@ -67,6 +69,12 @@ async function enviarNoticiasAndroid(client) {
             .setFooter({ text: 'Notícias sobre Android' });
 
         await canal.send({ embeds: [embed] });
+        noticiaEnviada = true; // Marca que uma notícia foi enviada
         break; // Envia apenas uma notícia por vez
+    }
+
+    // Se nenhuma notícia foi enviada, envia mensagem informando isso
+    if (!noticiaEnviada) {
+        await canal.send('Nenhuma nova notícia sobre Android foi encontrada.');
     }
 }
