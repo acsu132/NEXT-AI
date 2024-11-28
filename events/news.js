@@ -57,7 +57,7 @@ async function enviarNoticiasAndroid(client) {
         SENT_ARTICLES.add(noticia.url);
 
         const embed = new EmbedBuilder()
-            .setColor('#0099ff')
+            .setColor('#42f590')
             .setTitle(noticia.title)
             .setURL(noticia.url)
             .setDescription(noticia.description || 'Sem descrição disponível.')
