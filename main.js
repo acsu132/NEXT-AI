@@ -308,7 +308,7 @@ const news = require('./events/news');
 // Inicializar o módulo
 news.init(client);
 
-const news = require('./events/forumrepost');
+const forumrepost = require('./events/forumrepost');
 
 // Inicializar o módulo
 forumrepost.init(client);
