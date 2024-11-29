@@ -308,13 +308,14 @@ const news = require('./events/news');
 // Inicializar o módulo
 news.init(client);
 
-});
 const news = require('./events/forumrepost');
 
 // Inicializar o módulo
 forumrepost.init(client);
 
+
 });
+
 
 client.login(process.env.TOKEN);
 
