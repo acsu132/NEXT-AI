@@ -14,7 +14,7 @@ module.exports = {
         }
 
         // Verificar se o usuário foi mencionado
-        const mentionedUser = message.mentions.users.first();
+        const mentionedUser = message.mentions.members.first();
         if (!mentionedUser) {
             return message.reply('Por favor, mencione um usuário para copiar.');
         }
@@ -22,11 +22,20 @@ module.exports = {
         try {
             // Criar o webhook no canal atual
             const webhook = await message.channel.createWebhook({
-                name: mentionedUser.displayName || mentionedUser.username,
-                avatar: mentionedUser.displayAvatarURL({ dynamic: true }),
+                name: mentionedUser.displayName || mentionedUser.user.username,
+                avatar: mentionedUser.user.displayAvatarURL({ dynamic: true }),
             });
 
-            await message.reply(`Webhook criado como ${mentionedUser.username}! Ele será deletado em 30 segundos.`);
+            await message.reply(`Webhook criado como ${mentionedUser.displayName}! Ele será deletado em 30 segundos.`);
+
+            // Respostas engraçadas para certas frases
+            const funnyResponses = [
+                "é mentira",
+                "sabemos que é você!",
+                "não adianta negar",
+                "parece você sim!",
+                "não tem como esconder!"
+            ];
 
             // Criar um coletor para capturar mensagens do usuário mencionado
             const filter = (msg) => msg.author.id === mentionedUser.id;
@@ -34,12 +43,22 @@ module.exports = {
 
             collector.on('collect', async (msg) => {
                 try {
-                    // Reenviar a mensagem usando o webhook
-                    await webhook.send({
-                        content: msg.content,
-                        username: msg.author.username,
-                        avatarURL: msg.author.displayAvatarURL({ dynamic: true }),
-                    });
+                    // Verificar se a mensagem contém frases específicas
+                    if (/não sou eu|não é verdade|não sou/i.test(msg.content)) {
+                        const randomResponse = funnyResponses[Math.floor(Math.random() * funnyResponses.length)];
+                        await webhook.send({
+                            content: randomResponse,
+                            username: msg.author.username,
+                            avatarURL: msg.author.displayAvatarURL({ dynamic: true }),
+                        });
+                    } else {
+                        // Reenviar a mensagem usando o webhook
+                        await webhook.send({
+                            content: msg.content,
+                            username: msg.author.username,
+                            avatarURL: msg.author.displayAvatarURL({ dynamic: true }),
+                        });
+                    }
                 } catch (error) {
                     console.error('Erro ao enviar mensagem pelo webhook:', error);
                 }
