@@ -293,7 +293,6 @@ client.distube
 
 
 const express = require('express');
-const path = require('path');
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const app = express();
