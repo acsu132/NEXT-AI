@@ -293,7 +293,6 @@ client.distube
 
 
 const express = require('express');
-const { Client, GatewayIntentBits } = require('discord.js');
 
 const app = express();
 const port = 3000;
