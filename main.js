@@ -297,7 +297,6 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
 
 app.use(express.static('public'));
 
