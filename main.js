@@ -292,25 +292,32 @@ client.distube
     }
 
 
-const express = require("express");
+const express = require('express');
+const path = require('path');
+const { Client, GatewayIntentBits } = require('discord.js');
+
 const app = express();
 const port = 3000;
-app.get('/', (req, res) => {
-    const imagePath = path.join(__dirname, 'index.html');
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
+
+app.use(express.static('public'));
+
+app.get('/image', (req, res) => {
+    const imagePath = path.join(__dirname, 'public', 'image.png');
     res.sendFile(imagePath);
 });
+
 app.listen(port, () => {
     console.log(`🔗 Listening to GlaceYT : http://localhost:${port}`);
 });
 
 const news = require('./events/news');
-
 news.init(client);
 
-});
-const forumrepost = require('./events/forumrepost')
-});
+const forumrepost = require('./events/forumrepost');
 
 client.login(process.env.TOKEN);
 
 module.exports = client;
+
