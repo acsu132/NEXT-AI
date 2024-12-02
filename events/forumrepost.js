@@ -17,7 +17,7 @@ module.exports = (client) => {
             const embed = new EmbedBuilder()
                 .setAuthor({ name: message.author.username, iconURL: message.author.displayAvatarURL() })
                 .setDescription(message.content || 'Sem texto.')
-                .setColor(#19ff40)
+                .setColor('#19ff40')
                 .setTimestamp();
 
             // Adiciona anexos ao embed, se houver
