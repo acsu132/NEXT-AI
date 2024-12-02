@@ -311,13 +311,6 @@ news.init(client);
     }
 }
 
-});
-
-const forumrepost = require('./events/forumrepost');
-
-// Inicializar o módulo
-forumrepost.init(client);
-
 client.login(process.env.TOKEN);
 
 module.exports = client;
