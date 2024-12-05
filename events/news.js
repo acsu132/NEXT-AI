@@ -1,20 +1,32 @@
 const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
+const { MongoClient } = require('mongodb');
+const config = require('./config.json');
+
+// URI do MongoDB
+const MONGO_URI = config.mongodbUri;
+const DATABASE_NAME = 'newsBot';
+const COLLECTION_NAME = 'sentArticles';
 
 // ID do canal onde as notícias serão enviadas
-const CHANNEL_ID = '1309897299278696618'; 
-const SENT_ARTICLES = new Set(); // Armazena URLs de notícias já enviadas
+const CHANNEL_ID = '1309897299278696618';
 
 module.exports = {
     init: (client) => {
         client.on('ready', async () => {
             console.log('Módulo de notícias sobre Android inicializado.');
             
+            // Conecta ao MongoDB
+            const mongoClient = new MongoClient(MONGO_URI);
+            await mongoClient.connect();
+            const db = mongoClient.db(DATABASE_NAME);
+            const collection = db.collection(COLLECTION_NAME);
+
             // Primeiro envio após 5 segundos
-            setTimeout(() => enviarNoticiasAndroid(client), 5000);
+            setTimeout(() => enviarNoticiasAndroid(client, collection), 5000);
             
             // Envio regular a cada 2 horas
-            setInterval(() => enviarNoticiasAndroid(client), 7200000);
+            setInterval(() => enviarNoticiasAndroid(client, collection), 7200000);
         });
     },
     enviarNoticiasAndroid, // Exportando a função
@@ -38,7 +50,7 @@ async function buscarNoticiasAndroid() {
 }
 
 // Função para enviar notícias
-async function enviarNoticiasAndroid(client) {
+async function enviarNoticiasAndroid(client, collection) {
     const noticias = await buscarNoticiasAndroid();
     const canal = client.channels.cache.get(CHANNEL_ID);
 
@@ -47,33 +59,34 @@ async function enviarNoticiasAndroid(client) {
         return;
     }
 
-    let noticiaEnviada = false; // Variável para rastrear se uma notícia foi enviada
+    let noticiaEnviada = false;
 
     for (const noticia of noticias) {
-        if (SENT_ARTICLES.has(noticia.url)) {
+        const existe = await collection.findOne({ url: noticia.url });
+        if (existe) {
             continue; // Ignorar notícias já enviadas
         }
 
-        SENT_ARTICLES.add(noticia.url);
+        await collection.insertOne({ url: noticia.url }); // Salva a URL no banco de dados
 
         const embed = new EmbedBuilder()
             .setColor('#42f590')
             .setTitle(noticia.title)
             .setURL(noticia.url)
             .setDescription(noticia.description || 'Sem descrição disponível.')
+            .setThumbnail(noticia.source.url || 'https://via.placeholder.com/50') // Ícone do site
             .setImage(noticia.urlToImage || 'https://via.placeholder.com/600x400') // Exibe a imagem principal
             .addFields(
-                { name: 'Fonte', value: noticia.source.name, inline: true },
+                { name: 'Fonte', value: `[${noticia.source.name}](${noticia.url})`, inline: true },
                 { name: 'Data', value: new Date(noticia.publishedAt).toLocaleString(), inline: true }
             )
             .setFooter({ text: 'Notícias sobre Android' });
 
         await canal.send({ embeds: [embed] });
-        noticiaEnviada = true; // Marca que uma notícia foi enviada
+        noticiaEnviada = true;
         break; // Envia apenas uma notícia por vez
     }
 
-    // Loga a mensagem em vez de enviá-la no canal
     if (!noticiaEnviada) {
         console.log('Nenhuma nova notícia sobre Android foi encontrada.');
     }
