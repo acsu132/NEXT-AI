@@ -1,10 +1,9 @@
 const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 const { MongoClient } = require('mongodb');
-const config = require('./config.json');
 
 // URI do MongoDB
-const MONGO_URI = config.mongodbUri;
+const MONGO_URI = 'mongodb+srv://RTX:GAMING@cluster0.iuzzl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 const DATABASE_NAME = 'newsBot';
 const COLLECTION_NAME = 'sentArticles';
 
