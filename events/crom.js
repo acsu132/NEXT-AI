@@ -3,7 +3,7 @@ const gsmarena = require('gsmarena-api');
 const mongoose = require('mongoose');
 
 // Configuração do MongoDB
-mongoose.connect('mongodb://localhost:27017/dispositivoDB', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect('mongodb+srv://RTX:GAMING@cluster0.iuzzl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('Conectado ao MongoDB!'))
     .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
 
@@ -115,6 +115,3 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embed], components: [row] });
     }
 });
-
-// Login do bot
-client.login('SEU_TOKEN_AQUI');
