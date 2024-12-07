@@ -23,9 +23,9 @@
     },
     "lavalink": {
         "lavalink": {
-            "host": "INZEWORLD.COM (DE)",
-            "port": 3128,
-            "password": "saher.inzeworld.com",
+            "host": "lava-v3.ajieblogs.eu.org",
+            "port": 80,
+            "password": "https://dsc.gg/ajidevserver",
             "secure": false
         }
     },
