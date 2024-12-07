@@ -23,9 +23,9 @@
     },
     "lavalink": {
         "lavalink": {
-            "host": "lava-v3.ajieblogs.eu.org",
-            "port": 80,
-            "password": "https://dsc.gg/ajidevserver",
+            "host": "lava.catfein.com",
+            "port": 4000,
+            "password": "catfein",
             "secure": false
         }
     },
