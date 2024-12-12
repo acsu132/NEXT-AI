@@ -73,7 +73,7 @@ async function enviarNoticiasAndroid(client, collection) {
             .setTitle(noticia.title)
             .setURL(noticia.url)
             .setDescription(noticia.description || 'Sem descrição disponível.')
-            .setThumbnail(noticia.source.url || 'https://via.placeholder.com/50') // Ícone do site
+            .setThumbnail(noticia.source.url || 'https://www.google.com/s2/favicons?sz=64&domain=${new URL(noticia.url).hostname}') // Ícone do site
             .setImage(noticia.urlToImage || 'https://via.placeholder.com/600x400') // Exibe a imagem principal
             .addFields(
                 { name: 'Fonte', value: `[${noticia.source.name}](${noticia.url})`, inline: true },
