@@ -40,12 +40,40 @@ async function checkForNewVideos(client) {
     }
 }
 
+async function setNotificationChannel(message, args) {
+    const channelId = message.channel.id;
+    const [youtubeChannelId] = args;
+
+    if (!youtubeChannelId) {
+        return message.reply('Você precisa fornecer o ID do canal do YouTube!');
+    }
+
+    try {
+        await youtubeCollection.updateOne(
+            { serverId: message.guild.id },
+            { $set: { notificationChannelId: channelId, channelId: youtubeChannelId, lastVideoId: null } },
+            { upsert: true }
+        );
+        message.reply(`Canal configurado para notificações de vídeos do YouTube!`);
+    } catch (err) {
+        console.error('Erro ao configurar canal de notificações:', err);
+        message.reply('Houve um erro ao configurar o canal.');
+    }
+}
+
 module.exports = {
     init(client, collection) {
         youtubeCollection = collection;
 
+        client.on('messageCreate', (message) => {
+            if (message.content.startsWith('!setyoutubechannel')) {
+                const args = message.content.split(' ').slice(1);
+                setNotificationChannel(message, args);
+            }
+        });
+
         setInterval(() => {
             checkForNewVideos(client);
-        }, 60000); // Verifica novos vídeos a cada 60 segundos
+        }, 60000);
     },
 };
