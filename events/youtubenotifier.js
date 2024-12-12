@@ -16,9 +16,9 @@ async function loadYoutubeConfig() {
 
 module.exports = async (client) => {
     let youtubeConfig = await loadYoutubeConfig();
-    const CHECK_INTERVAL = 60000; // 1 minuto
-    const apiKey = 'AIzaSyDMqOiKFqv49wI5wQBZkRD0ncDaB991Ifc'; // Substitua pela sua API do YouTube
-    const youtubeChannelId = 'UCZmMa-NeAKYc6w-rNzNypxQ'; // Substitua pelo ID do canal
+    const CHECK_INTERVAL = 60000;
+   const apiKey = process.env.YOUTUBE_API_KEY; // API key should be on env
+    const youtubeChannelId = 'UCZmMa-NeAKYc6w-rNzNypxQ'; // Youtube channel id, You can find it on youtube channel id finder
 
     setInterval(async () => {
         youtubeConfig = await loadYoutubeConfig();
