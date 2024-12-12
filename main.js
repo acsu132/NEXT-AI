@@ -309,17 +309,6 @@ app.listen(port, () => {
     console.log(`🔗 Listening to GlaceYT : http://localhost:${port}`);
 });
 
-const connectToDatabase = require('./mongodb');
-let youtubeCollection;
-
-connectToDatabase().then((db) => {
-    youtubeCollection = db.collection('servers');
-
-    const youtubeNotifier = require('./events/youtubeNotifier');
-    youtubeNotifier.init(client, youtubeCollection);
-});
-
-
 const news = require('./events/news');
 news.init(client);
 
@@ -328,4 +317,3 @@ const forumrepost = require('./events/forumrepost');
 client.login(process.env.TOKEN);
 
 module.exports = client;
-
