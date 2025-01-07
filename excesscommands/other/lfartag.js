@@ -1,45 +1,45 @@
 const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
-const lang = require('../../events/loadLanguage');
+const config = require('../../config.json'); // Contém o prefixo
 
 module.exports = {
     name: 'lfartag',
-    description: lang.lfartagDescription,
+    description: 'Busca todas as músicas de um artista no repositório',
     async execute(message, args) {
-        const artist = args[0];  // O nome do artista
-        if (!artist) return message.reply(lang.lfartagNoArtist);  // Mensagem de erro se o artista não for informado
+        if (args.length < 1) {
+            return message.reply('Você precisa fornecer o nome de um artista.');
+        }
+
+        const artist = args.join(' ');
+        const githubRepo = 'acsu132/ProjectTag'; // Substitua pelo caminho do seu repositório
+        const githubApiUrl = `https://api.github.com/repos/${githubRepo}/contents/Artists/${artist}`;
 
         try {
-            // A URL base do repositório no GitHub onde as músicas estão armazenadas
-            const githubRepo = `https://api./github.com/acsu132/ProjectTag/tree/main/Artists/${artist}`;
-            const response = await axios.get(githubRepo);
+            const response = await axios.get(githubApiUrl, {
+                headers: { 'Authorization': `token ${process.env.GITHUB_TOKEN}` },
+            });
 
-            if (response.status === 200) {
-                // Tipos de arquivos de música suportados
-                const supportedFormats = ['.mp3', '.flac', '.wav', '.ogg', '.aac', '.m4a'];
-
-                // Filtra arquivos com extensões de música
-                const musicList = response.data.filter(file => supportedFormats.some(format => file.name.endsWith(format)));
-
-                if (musicList.length === 0) {
-                    return message.reply(lang.lfartagNoMusicFound);  // Se não encontrar músicas, avisa o usuário
-                }
-
-                // Gera a lista de links para as músicas
-                const musicLinks = musicList.map(file => file.download_url).join('\n');
-
-                const embed = new EmbedBuilder()
-                    .setTitle(`${lang.lfartagTitle} ${artist}`)
-                    .setDescription(`${lang.lfartagMusicFound}\n${musicLinks}`)
-                    .setColor('#00FF00');
-
-                message.reply({ embeds: [embed] });  // Envia a resposta para o usuário
-            } else {
-                message.reply(lang.lfartagError);  // Mensagem de erro caso a requisição falhe
+            if (!Array.isArray(response.data)) {
+                return message.reply('Artista não encontrado no repositório.');
             }
+
+            const files = response.data.filter(item => item.type === 'file');
+
+            if (files.length === 0) {
+                return message.reply('Nenhuma música encontrada para este artista.');
+            }
+
+            const fileLinks = files.map(file => `[${file.name}](${file.download_url})`).join('\n');
+
+            const embed = new EmbedBuilder()
+                .setTitle(`Músicas de ${artist}`)
+                .setDescription(fileLinks)
+                .setColor(0x00AE86);
+
+            message.reply({ embeds: [embed] });
         } catch (error) {
             console.error(error);
-            message.reply(lang.lfartagError);  // Mensagem de erro geral
+            return message.reply('Ocorreu um erro ao buscar as músicas. Verifique o nome do artista ou tente novamente mais tarde.');
         }
     },
 };
