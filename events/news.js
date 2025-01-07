@@ -74,7 +74,7 @@ async function enviarNoticiasAndroid(client, collection) {
             .setURL(noticia.url)
             .setDescription(noticia.description || 'Sem descrição disponível.')
             .setThumbnail(noticia.source.url || 'https://via.placeholder.com/50') // Ícone do site
-            .setImage(noticia.urlToImage || 'https://via.placeholder.com/600x400') // Exibe a imagem principal
+            .setImage(noticia.urlToImage || 'https://images-ext-1.discordapp.net/external/5JUrLte6GqtsOYoRpWP1RcGagHDl5nyg7Hs5AyfF_yA/https/chromeunboxed.com/wp-content/uploads/2017/06/cropped-cuSiteIcon-1-32x32.png') // Exibe a imagem principal
             .addFields(
                 { name: 'Fonte', value: `[${noticia.source.name}](${noticia.url})`, inline: true },
                 { name: 'Data', value: new Date(noticia.publishedAt).toLocaleString(), inline: true }
