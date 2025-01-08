@@ -52,7 +52,7 @@ module.exports = {
 
             // Filtra as pastas de álbuns e arquivos de música
             const albumsAndSingles = artistContents.filter(item => item.type === 'dir');
-            const musicFiles = artistContents.filter(item => /\.(mp3|wav|ogg)$/i.test(item.name)); // Arquivos de música
+            const musicFiles = artistContents.filter(item => /\.(mp3|wav|m4a|ogg)$/i.test(item.name)); // Arquivos de música
 
             // Verifica se existe o arquivo artistdesc.txt e artistpfp.png
             const descriptionFile = artistContents.find(item => item.name === 'artistdesc.txt');
