@@ -1,7 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
 require('dotenv').config();
 
 module.exports = {
