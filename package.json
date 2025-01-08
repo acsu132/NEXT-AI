@@ -19,6 +19,7 @@
     "@distube/yt-dlp": "^2.0.1",
     "@distube/ytdl": "^2.0.6",
     "@napi-rs/canvas": "^0.1.52",
+"adm-zip": "^0.5.9"
     "akaneko": "^5.3.0",
     "aniki": "^1.2.2",
     "anime-actions": "^2.1.1",
