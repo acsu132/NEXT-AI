@@ -77,22 +77,21 @@ module.exports = {
 
             // Adiciona os links de download para álbuns e músicas
             if (albumsAndSingles.length > 0) {
-                embed.addFields(
-                    albumsAndSingles.map(album => ({
-                        name: `Álbum/Pasta: ${album.name}`,
-                        value: `[Baixar](https://github.com/${owner}/${repo}/tree/main/${album.path})`,
-                    }))
-                );
-            }
+           embed.addFields(
+    albumsAndSingles.map(album => ({
+        name: `Álbum/Pasta: ${album.name}`,
+        value: `[Baixar](https://github.com/${owner}/${repo}/tree/main/${album.path.replace(/ /g, '%20')})`,
+    }))
+);
 
             if (musicFiles.length > 0) {
                 embed.addFields(
-                    musicFiles.map(file => ({
-                        name: `Música: ${file.name}`,
-                        value: `[Baixar](${file.download_url})`,
-                    }))
-                );
-            }
+    musicFiles.map(file => ({
+        name: `Música: ${file.name}`,
+        value: `[Baixar](${file.download_url.replace(/ /g, '%20')})`,
+    }))
+);
+
 
             // Retorna o embed no canal
             message.reply({ embeds: [embed] });
