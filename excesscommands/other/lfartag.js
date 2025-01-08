@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+euconst { EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -101,4 +101,3 @@ module.exports = {
 } catch (error) {
     console.error("Erro:", error.message);
         }
-                
