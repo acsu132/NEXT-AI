@@ -1,45 +1,106 @@
 const { EmbedBuilder } = require('discord.js');
-const axios = require('axios');
-const config = require('../../config.json'); // Contém o prefixo
+const fs = require('fs');
+const path = require('path');
+const fetch = require('node-fetch');
+require('dotenv').config();
 
 module.exports = {
     name: 'lfartag',
-    description: 'Busca todas as músicas de um artista no repositório',
+    description: 'Procura por todas as músicas de um artista no repositório',
     async execute(message, args) {
-        if (args.length < 1) {
-            return message.reply('Você precisa fornecer o nome de um artista.');
+        const githubToken = process.env.GITHUB_TOKEN;
+        const owner = 'acsu132'; // Substitua pelo nome do proprietário do repositório
+        const repo = 'ProjectTag'; // Substitua pelo nome do repositório
+        const basePath = 'Artists';
+
+        if (!args.length) {
+            return message.reply('Por favor, forneça o nome de um artista.');
         }
 
-        const artist = args.join(' ');
-        const githubRepo = 'acsu132/ProjectTag'; // Substitua pelo caminho do seu repositório
-        const githubApiUrl = `https://api.github.com/repos/${githubRepo}/contents/Artists/${artist}`;
+        const artistName = args.join(' ').toLowerCase(); // Converte o nome do artista para minúsculas
+
+        const headers = {
+            Authorization: `Bearer ${githubToken}`,
+            'User-Agent': 'DiscordBot',
+        };
 
         try {
-            const response = await axios.get(githubApiUrl, {
-                headers: { 'Authorization': `token ${process.env.GITHUB_TOKEN}` },
-            });
+            // Faz a requisição para buscar os artistas na pasta 'Artists'
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${basePath}`, { headers });
+            const artists = await response.json();
 
-            if (!Array.isArray(response.data)) {
-                return message.reply('Artista não encontrado no repositório.');
+            if (response.status !== 200) {
+                console.error(artists.message);
+                return message.reply('Ocorreu um erro ao acessar o repositório. Verifique os logs.');
             }
 
-            const files = response.data.filter(item => item.type === 'file');
+            // Procura pelo artista ignorando maiúsculas/minúsculas
+            const matchingArtist = artists.find(artist => artist.name.toLowerCase() === artistName);
 
-            if (files.length === 0) {
-                return message.reply('Nenhuma música encontrada para este artista.');
+            if (!matchingArtist || matchingArtist.type !== 'dir') {
+                return message.reply('Artista não encontrado ou inválido. Certifique-se de que o nome está correto.');
             }
 
-            const fileLinks = files.map(file => `[${file.name}](${file.download_url})`).join('\n');
+            // Busca as músicas na pasta do artista
+            const artistPath = matchingArtist.path;
+            const artistResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${artistPath}`, { headers });
+            const artistContents = await artistResponse.json();
 
+            if (artistResponse.status !== 200) {
+                console.error(artistContents.message);
+                return message.reply('Erro ao acessar os conteúdos do artista.');
+            }
+
+            // Filtra as pastas de álbuns e arquivos de música
+            const albumsAndSingles = artistContents.filter(item => item.type === 'dir');
+            const musicFiles = artistContents.filter(item => /\.(mp3|wav|ogg)$/i.test(item.name)); // Arquivos de música
+
+            // Verifica se existe o arquivo artistdesc.txt e artistpfp.png
+            const descriptionFile = artistContents.find(item => item.name === 'artistdesc.txt');
+            const pfpFile = artistContents.find(item => item.name === 'artistpfp.png');
+
+            // Busca a descrição do artista
+            let artistDescription = 'Descrição não disponível.';
+            if (descriptionFile) {
+                const descResponse = await fetch(descriptionFile.download_url, { headers });
+                artistDescription = await descResponse.text();
+            }
+
+            // Monta o link da imagem de perfil, se existir
+            const artistPfpUrl = pfpFile ? pfpFile.download_url : null;
+
+            // Cria um embed com as informações
             const embed = new EmbedBuilder()
-                .setTitle(`Músicas de ${artist}`)
-                .setDescription(fileLinks)
-                .setColor(0x00AE86);
+                .setTitle(`Músicas de ${matchingArtist.name}`)
+                .setDescription(artistDescription)
+                .setThumbnail(artistPfpUrl || 'https://raw.githubusercontent.com/acsu132/ProjectTag/refs/heads/main/Artists/defaultpfp.png') // Use uma imagem padrão caso não exista artistpfp.png
+                .setColor('#FF5733');
 
+            // Adiciona os links de download para álbuns e músicas
+            if (albumsAndSingles.length > 0) {
+                embed.addFields(
+                    albumsAndSingles.map(album => ({
+                        name: `Álbum/Pasta: ${album.name}`,
+                        value: `[Baixar](https://github.com/${owner}/${repo}/tree/main/${album.path})`,
+                    }))
+                );
+            }
+
+            if (musicFiles.length > 0) {
+                embed.addFields(
+                    musicFiles.map(file => ({
+                        name: `Música: ${file.name}`,
+                        value: `[Baixar](${file.download_url})`,
+                    }))
+                );
+            }
+
+            // Retorna o embed no canal
             message.reply({ embeds: [embed] });
+
         } catch (error) {
             console.error(error);
-            return message.reply('Ocorreu um erro ao buscar as músicas. Verifique o nome do artista ou tente novamente mais tarde.');
+            message.reply('Ocorreu um erro ao processar sua solicitação.');
         }
     },
 };
