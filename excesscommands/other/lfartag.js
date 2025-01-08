@@ -96,9 +96,9 @@ module.exports = {
             // Retorna o embed no canal
             message.reply({ embeds: [embed] });
 
-        } catch (error) {
-            console.error(error);
-            message.reply('Ocorreu um erro ao processar sua solicitação.');
+        try {
+    // Código que pode gerar um erro
+} catch (error) {
+    console.error("Erro:", error.message);
         }
-    },
-};
+                
