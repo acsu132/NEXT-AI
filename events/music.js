@@ -37,172 +37,164 @@ module.exports = (client) => {
             console.error(`\x1b[31m[ LAVALINK ]\x1b[0m Node \x1b[32m${node.name}\x1b[0m had an error: \x1b[33m${error.message}\x1b[0m`);
         });
 
-        client.riffy.on('trackStart', async (player, track) => {
-            const channel = client.channels.cache.get(player.textChannel);
+client.riffy.on('trackStart', async (player, track) => {
+    const channel = client.channels.cache.get(player.textChannel);
 
-            // Update bot status to "Listening to (Track Name)"
-            client.user.setPresence({
-                activities: [{ name: `♫ ${track.info.title}`, type: ActivityType.Listening }],
-                status: 'online',
-            });
+    // Update bot status to "Listening to (Track Name)"
+    client.user.setPresence({
+        activities: [{ name: `♫ ${track.info.title}`, type: ActivityType.Listening }],
+        status: 'online',
+    });
 
-            function formatTime(ms) {
-                if (!ms || ms === 0) return "0:00";
-                const totalSeconds = Math.floor(ms / 1000);
-                const hours = Math.floor(totalSeconds / 3600);
-                const minutes = Math.floor((totalSeconds % 3600) / 60);
-                const seconds = totalSeconds % 60;
-                return `${hours > 0 ? hours + ":" : ""}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-            }
+    function formatTime(ms) {
+        if (!ms || ms === 0) return "0:00";
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${hours > 0 ? hours + ":" : ""}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    }
 
+    try {
+        // Disable previous message's buttons if it exists.
+        if (player.currentMessageId) {
             try {
-                // Disable previous message's buttons if it exists.
-                if (player.currentMessageId) {
-                    try {
-                        const oldMessage = await channel.messages.fetch(player.currentMessageId);
-                        if (oldMessage) {
-                            const disabledComponents = oldMessage.components.map(row => {
-                                return new ActionRowBuilder().addComponents(
-                                    row.components.map(button => ButtonBuilder.from(button).setDisabled(true))
-                                );
-                            });
-                            await oldMessage.edit({ components: disabledComponents });
-                        }
-                    } catch (err) {
-                        console.warn("Previous message not found (likely deleted), skipping edit.");
-                    }
-                }
-
-                // Generate the song card image.
-                const cardImage = await dynamicCard({
-                    thumbnailURL: track.info.thumbnail,
-                    songTitle: track.info.title,
-                    songArtist: track.info.author,
-                    trackRequester: track.requester ? track.requester.username : "Next AI",
-                    fontPath: path.join(__dirname, "../UI", "fonts", "AfacadFlux-Regular.ttf"),
-                    backgroundColor: "#FF00FF",
-                });
-
-                const attachment = new AttachmentBuilder(cardImage, { name: 'songcard.png' });
-
-                const description = `- Título: ${track.info.title} \n`+
-                ` - Artista: ${track.info.author} \n`+
-                ` - Duração: ${formatTime(track.info.length)} (\`${track.info.length}ms\`) \n`+
-                ` - Stream: ${track.info.stream ? "Sim" : "Não"} \n`+
-                ` - Pesquisável: ${track.info.seekable ? "Sim" : "Não"} \n`+
-                ` - URI: [Link](${track.info.uri}) \n`+
-                ` - Fonte: ${track.info.sourceName} \n`+ 
-                ` - Pedido por: ${track.requester ? `<@${track.requester.id}>` : "Unknown"}`; 
-
-                const embed = new EmbedBuilder()
-                    .setAuthor({ name: "Tocando agora...", iconURL: musicIcons.playerIcon, url: "https://dsc.gg/nextech" })
-                    .setDescription(description)
-                    .setImage('attachment://songcard.png')
-                    .setFooter({ text: 'Distube Player', iconURL: musicIcons.footerIcon })
-                    .setColor('#9900ff');
-
-                // Conditionally create buttons only if track.requester is defined.
-                let components = [];
-                if (track.requester && track.requester.id) {
-                    const buttonsRow = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder().setCustomId(`volume_up_${track.requester.id}`).setEmoji('🔊').setStyle(ButtonStyle.Secondary),
-                        new ButtonBuilder().setCustomId(`volume_down_${track.requester.id}`).setEmoji('🔉').setStyle(ButtonStyle.Secondary),
-                        new ButtonBuilder().setCustomId(`pause_${track.requester.id}`).setEmoji('⏸️').setStyle(ButtonStyle.Secondary),
-                        new ButtonBuilder().setCustomId(`resume_${track.requester.id}`).setEmoji('▶️').setStyle(ButtonStyle.Secondary),
-                        new ButtonBuilder().setCustomId(`skip_${track.requester.id}`).setEmoji('⏭️').setStyle(ButtonStyle.Secondary)
-                    );
-
-                    const buttonsRow2 = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder().setCustomId(`stop_${track.requester.id}`).setEmoji('⏹️').setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId(`clear_queue_${track.requester.id}`).setEmoji('🗑️').setStyle(ButtonStyle.Secondary),
-                        new ButtonBuilder().setCustomId(`show_queue_${track.requester.id}`).setEmoji('📜').setStyle(ButtonStyle.Secondary),
-                        new ButtonBuilder().setCustomId(`shuffle_${track.requester.id}`).setEmoji('🔀').setStyle(ButtonStyle.Secondary),
-                        new ButtonBuilder().setCustomId(`loop_${track.requester.id}`).setEmoji('🔁').setStyle(ButtonStyle.Secondary)
-                    );
-
-                    components = [buttonsRow, buttonsRow2];
-                }
-                // If track.requester is undefined (for autoplay songs), no buttons are added.
-
-                const message = await channel.send({
-                    embeds: [embed],
-                    files: [attachment],
-                    components: components
-                });
-
-                player.currentMessageId = message.id;
-
-                // Fetch lyrics
-                const apiUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(track.info.title)}&artist_name=${encodeURIComponent(track.info.author)}`;
-                const response = await axios.get(apiUrl);
-
-                if (response.data && response.data.syncedLyrics && response.data.syncedLyrics !== 'Fetching lyrics...') {
-                    const lyrics = response.data.syncedLyrics;
-                    const tempDir = './temp';
-                    if (!fs.existsSync(tempDir)) {
-                        fs.mkdirSync(tempDir, { recursive: true });
-                    }
-                    const fileName = `${sanitize(track.info.title)} - ${sanitize(track.info.author)}.lrc`;
-                    const filePath = path.join(tempDir, fileName);
-                    fs.writeFileSync(filePath, lyrics, 'utf8');
-
-                    embed.addFields({ name: 'Lyrics', value: lyrics.split('\n')[0] });
-                    await message.edit({ embeds: [embed] });
-
-                    // Periodically update lyrics
-                    const lyricsLines = lyrics.split('\n');
-                    let currentLine = '';
-
-                    function updateLyrics() {
-    const currentTime = player.position;
-    for (const line of lyricsLines) {
-        const match = line.match(/\[(\d+):(\d+).(\d+)\](.*)/);
-        if (match) {
-            const minutes = parseInt(match[1], 10);
-            const seconds = parseInt(match[2], 10);
-            const milliseconds = parseInt(match[3], 10);
-            const lineTime = (minutes * 60 + seconds) * 1000 + milliseconds;
-            if (currentTime >= lineTime) {
-                currentLine = match[4];
-            } else {
-                break;
-            }
-        }
-    }
-    if (currentLine) {
-        if (!embed.fields) {
-            embed.fields = [];
-        }
-        const lyricsField = embed.fields.find(f => f.name === 'Lyrics');
-        if (lyricsField) {
-            lyricsField.value = currentLine;
-            message.edit({ embeds: [embed] });
-        }
-    }
-}
-                        if (currentLine) {
-                            const lyricsField = embed.fields.find(f => f.name === 'Lyrics');
-                            if (lyricsField) {
-                                lyricsField.value = currentLine;
-                                message.edit({ embeds: [embed] });
-                            }
-                        }
-                    }
-
-                    const lyricsInterval = setInterval(updateLyrics, 1000);
-
-                    // Clear interval when the track ends
-                    client.riffy.on('trackEnd', async (player, track) => {
-                        clearInterval(lyricsInterval);
-                        if (fs.existsSync(filePath)) {
-                            fs.unlinkSync(filePath);
-                        }
+                const oldMessage = await channel.messages.fetch(player.currentMessageId);
+                if (oldMessage) {
+                    const disabledComponents = oldMessage.components.map(row => {
+                        return new ActionRowBuilder().addComponents(
+                            row.components.map(button => ButtonBuilder.from(button).setDisabled(true))
+                        );
                     });
+                    await oldMessage.edit({ components: disabledComponents });
                 }
-            } catch (error) {
-                console.error('Error creating or sending song card:', error);
+            } catch (err) {
+                console.warn("Previous message not found (likely deleted), skipping edit.");
             }
+        }
+
+        // Generate the song card image.
+        const cardImage = await dynamicCard({
+            thumbnailURL: track.info.thumbnail,
+            songTitle: track.info.title,
+            songArtist: track.info.author,
+            trackRequester: track.requester ? track.requester.username : "Next AI",
+            fontPath: path.join(__dirname, "../UI", "fonts", "AfacadFlux-Regular.ttf"),
+            backgroundColor: "#FF00FF",
         });
+
+        const attachment = new AttachmentBuilder(cardImage, { name: 'songcard.png' });
+
+        const description = `- Título: ${track.info.title} \n`+
+        ` - Artista: ${track.info.author} \n`+
+        ` - Duração: ${formatTime(track.info.length)} (\`${track.info.length}ms\`) \n`+
+        ` - Stream: ${track.info.stream ? "Sim" : "Não"} \n`+
+        ` - Pesquisável: ${track.info.seekable ? "Sim" : "Não"} \n`+
+        ` - URI: [Link](${track.info.uri}) \n`+
+        ` - Fonte: ${track.info.sourceName} \n`+ 
+        ` - Pedido por: ${track.requester ? `<@${track.requester.id}>` : "Unknown"}`; 
+
+        const embed = new EmbedBuilder()
+            .setAuthor({ name: "Tocando agora...", iconURL: musicIcons.playerIcon, url: "https://dsc.gg/nextech" })
+            .setDescription(description)
+            .setImage('attachment://songcard.png')
+            .setFooter({ text: 'Distube Player', iconURL: musicIcons.footerIcon })
+            .setColor('#9900ff');
+
+        // Conditionally create buttons only if track.requester is defined.
+        let components = [];
+        if (track.requester && track.requester.id) {
+            const buttonsRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`volume_up_${track.requester.id}`).setEmoji('🔊').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`volume_down_${track.requester.id}`).setEmoji('🔉').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`pause_${track.requester.id}`).setEmoji('⏸️').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`resume_${track.requester.id}`).setEmoji('▶️').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`skip_${track.requester.id}`).setEmoji('⏭️').setStyle(ButtonStyle.Secondary)
+            );
+
+            const buttonsRow2 = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`stop_${track.requester.id}`).setEmoji('⏹️').setStyle(ButtonStyle.Danger),
+                new ButtonBuilder().setCustomId(`clear_queue_${track.requester.id}`).setEmoji('🗑️').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`show_queue_${track.requester.id}`).setEmoji('📜').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`shuffle_${track.requester.id}`).setEmoji('🔀').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(`loop_${track.requester.id}`).setEmoji('🔁').setStyle(ButtonStyle.Secondary)
+            );
+
+            components = [buttonsRow, buttonsRow2];
+        }
+        // If track.requester is undefined (for autoplay songs), no buttons are added.
+
+        const message = await channel.send({
+            embeds: [embed],
+            files: [attachment],
+            components: components
+        });
+
+        player.currentMessageId = message.id;
+
+        // Fetch lyrics
+        const apiUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(track.info.title)}&artist_name=${encodeURIComponent(track.info.author)}`;
+        const response = await axios.get(apiUrl);
+
+        if (response.data && response.data.syncedLyrics && response.data.syncedLyrics !== 'Fetching lyrics...') {
+            const lyrics = response.data.syncedLyrics;
+            const tempDir = './temp';
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+            }
+            const fileName = `${sanitize(track.info.title)} - ${sanitize(track.info.author)}.lrc`;
+            const filePath = path.join(tempDir, fileName);
+            fs.writeFileSync(filePath, lyrics, 'utf8');
+
+            embed.addFields({ name: 'Lyrics', value: lyrics.split('\n')[0] });
+            await message.edit({ embeds: [embed] });
+
+            // Periodically update lyrics
+            const lyricsLines = lyrics.split('\n');
+            let currentLine = '';
+
+            function updateLyrics() {
+                const currentTime = player.position;
+                for (const line of lyricsLines) {
+                    const match = line.match(/\[(\d+):(\d+).(\d+)\](.*)/);
+                    if (match) {
+                        const minutes = parseInt(match[1], 10);
+                        const seconds = parseInt(match[2], 10);
+                        const milliseconds = parseInt(match[3], 10);
+                        const lineTime = (minutes * 60 + seconds) * 1000 + milliseconds;
+                        if (currentTime >= lineTime) {
+                            currentLine = match[4];
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                if (currentLine) {
+                    if (!embed.fields) {
+                        embed.fields = [];
+                    }
+                    const lyricsField = embed.fields.find(f => f.name === 'Lyrics');
+                    if (lyricsField) {
+                        lyricsField.value = currentLine;
+                        message.edit({ embeds: [embed] });
+                    }
+                }
+            }
+
+            const lyricsInterval = setInterval(updateLyrics, 1000);
+
+            // Clear interval when the track ends
+            client.riffy.on('trackEnd', async (player, track) => {
+                clearInterval(lyricsInterval);
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error creating or sending song card:', error);
+    }
+});
 
         client.riffy.on('trackEnd', async (player, track) => {
             const channel = client.channels.cache.get(player.textChannel);
