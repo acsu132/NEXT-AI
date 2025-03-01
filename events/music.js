@@ -191,7 +191,7 @@ module.exports = (client) => {
                         console.warn("Failed to edit message, it might have been deleted.");
                         clearInterval(interval);
                     }
-                }, 1000);
+                }, 50);
 
                 player.on('trackEnd', () => {
                     clearInterval(interval);
