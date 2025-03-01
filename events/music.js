@@ -30,11 +30,11 @@ module.exports = (client) => {
         });
 
         client.riffy.on('nodeConnect', (node) => {
-            console.log(`\x1b[34m[ LAVALINK CONNECTION ]\x1b[0m Node connected: \x1b[32m${node.name}\x1b[0m`);
+            console.log(`[ LAVALINK CONNECTION ] Node connected: ${node.name}`);
         });
 
         client.riffy.on('nodeError', (node, error) => {
-            console.error(`\x1b[31m[ LAVALINK ]\x1b[0m Node \x1b[32m${node.name}\x1b[0m had an error: \x1b[33m${error.message}\x1b[0m`);
+            console.error(`[ LAVALINK ] Node ${node.name} had an error: ${error.message}`);
         });
 
         client.riffy.on('trackStart', async (player, track) => {
