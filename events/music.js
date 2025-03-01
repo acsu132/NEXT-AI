@@ -175,7 +175,7 @@ module.exports = (client) => {
                 }
 
                 // Start the lyrics from the current track position with a negative delay of -300ms
-                const startTime = player.position - 300;
+                const startTime = player.position - 800;
                 let currentLyric = getCurrentLyric(parsedLyrics, startTime);
                 embed.setDescription(description.replace('Fetching lyrics...', `**Lyrics**: ${currentLyric}`));
                 await message.edit({ embeds: [embed] });
