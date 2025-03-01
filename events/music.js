@@ -7,6 +7,7 @@ const { Riffy } = require('riffy');
 const { autoplayCollection } = require('../mongodb');
 const axios = require('axios');
 const sanitize = require('sanitize-filename');
+const fs = require('fs');
 
 module.exports = (client) => {
     if (config.excessCommands.lavalink) {
@@ -91,7 +92,7 @@ module.exports = (client) => {
                 ` - Pesquisável: ${track.info.seekable ? "Sim" : "Não"} \n`+
                 ` - URI: [Link](${track.info.uri}) \n`+
                 ` - Fonte: ${track.info.sourceName} \n`+ 
-                ` - Pedido por: ${track.requester ? `<@${track.requester.id}>` : "Unknown"}` + "\n\n**Lyrics**\nFetching lyrics..."; 
+                ` - Pedido por: ${track.requester ? `<@${track.requester.id}>` : "Unknown"}` + "\n\n**Lyrics**: Fetching lyrics..."; 
                 
                 const embed = new EmbedBuilder()
                     .setAuthor({ name: "Tocando agora...", iconURL: musicIcons.playerIcon, url: "https://dsc.gg/nextech" })
@@ -177,18 +178,25 @@ module.exports = (client) => {
                 // Start the lyrics from the current track position
                 const startTime = player.position;
                 let currentLyric = getCurrentLyric(parsedLyrics, startTime);
-                embed.setDescription(description.replace('Fetching lyrics...', currentLyric));
+                embed.setDescription(description.replace('Fetching lyrics...', `**Lyrics**: ${currentLyric}`));
                 await message.edit({ embeds: [embed] });
 
                 // Update the lyrics every 1ms
                 const interval = setInterval(async () => {
                     const currentTime = player.position;
                     currentLyric = getCurrentLyric(parsedLyrics, currentTime);
-                    embed.setDescription(description.replace(currentLyric, currentLyric));
+                    embed.setDescription(description.replace(/(\*\*Lyrics\*\*: ).*/, `**Lyrics**: ${currentLyric}`));
                     await message.edit({ embeds: [embed] });
                 }, 1);
 
-                player.on('trackEnd', () => clearInterval(interval));
+                player.on('trackEnd', () => {
+                    clearInterval(interval);
+                    // Delete the lrc file from the cache
+                    const cachePath = path.join(__dirname, '../cache', `${sanitize(track.info.title)}.lrc`);
+                    if (fs.existsSync(cachePath)) {
+                        fs.unlinkSync(cachePath);
+                    }
+                });
 
             } catch (error) {
                 console.error('Error creating or sending song card:', error);
