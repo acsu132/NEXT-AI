@@ -122,7 +122,6 @@ module.exports = (client) => {
 
                     components = [buttonsRow, buttonsRow2];
                 }
-                // If track.requester is undefined (for autoplay songs), no buttons are added.
 
                 const message = await channel.send({
                     embeds: [embed],
@@ -181,13 +180,18 @@ module.exports = (client) => {
                 embed.setDescription(description.replace('Fetching lyrics...', `**Lyrics**: ${currentLyric}`));
                 await message.edit({ embeds: [embed] });
 
-                // Update the lyrics every 1ms
+                // Update the lyrics every 1000ms
                 const interval = setInterval(async () => {
                     const currentTime = player.position;
                     currentLyric = getCurrentLyric(parsedLyrics, currentTime);
                     embed.setDescription(description.replace(/(\*\*Lyrics\*\*: ).*/, `**Lyrics**: ${currentLyric}`));
-                    await message.edit({ embeds: [embed] });
-                }, 1);
+                    try {
+                        await message.edit({ embeds: [embed] });
+                    } catch (err) {
+                        console.warn("Failed to edit message, it might have been deleted.");
+                        clearInterval(interval);
+                    }
+                }, 1000);
 
                 player.on('trackEnd', () => {
                     clearInterval(interval);
@@ -243,10 +247,9 @@ module.exports = (client) => {
                         const finalMessage = await channel.messages.fetch(player.currentMessageId);
                         if (finalMessage) {
                             await finalMessage.delete();
-                            //console.log("Final embed message has been deleted after delay.");
                         }
                     } catch (err) {
-                        //console.error("Error deleting final embed message:", err);
+                        console.error("Error deleting final embed message:", err);
                     }
                 }, 2000); 
             }
@@ -363,17 +366,15 @@ module.exports = (client) => {
                         break;
                 }
             } catch (error) {
-                //console.error('Error handling button interaction:', error);
                 await interaction.editReply('❌ Algo deu errado.');
             }
         });
 
         client.on('raw', d => client.riffy.updateVoiceState(d));
         client.once('ready', () => {
-            //console.log('\x1b[35m[ MUSIC 2 ]\x1b[0m', '\x1b[32mLavalink Music System Active ✅\x1b[0m');
             client.riffy.init(client.user.id);
         });
     } else {
-        console.log('\x1b[31m[ MUSIC ]\x1b[0m Lavalink Music System Disabled ❌');
+        console.log('[ MUSIC ] Lavalink Music System Disabled ❌');
     }
 };
