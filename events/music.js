@@ -174,13 +174,19 @@ module.exports = (client) => {
                     return (minutes * 60 + seconds) * 1000;
                 }
 
-                // Update the lyrics every 0.5 seconds
+                // Start the lyrics from the current track position
+                const startTime = player.position;
+                let currentLyric = getCurrentLyric(parsedLyrics, startTime);
+                embed.setDescription(description.replace('Fetching lyrics...', currentLyric));
+                await message.edit({ embeds: [embed] });
+
+                // Update the lyrics every 1ms
                 const interval = setInterval(async () => {
                     const currentTime = player.position;
-                    const currentLyric = getCurrentLyric(parsedLyrics, currentTime);
-                    embed.setDescription(description.replace(/Fetching lyrics...|No lyrics found.|.*/, currentLyric));
+                    currentLyric = getCurrentLyric(parsedLyrics, currentTime);
+                    embed.setDescription(description.replace(currentLyric, currentLyric));
                     await message.edit({ embeds: [embed] });
-                }, 500);
+                }, 1);
 
                 player.on('trackEnd', () => clearInterval(interval));
 
