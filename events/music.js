@@ -175,13 +175,17 @@ module.exports = (client) => {
                 }
 
                 // Start the lyrics from the current track position with a negative delay of -300ms
-                const startTime = player.position - 800;
+                const startTime = player.position - 300;
                 let currentLyric = getCurrentLyric(parsedLyrics, startTime);
                 embed.setDescription(description.replace('Fetching lyrics...', `**Lyrics**: ${currentLyric}`));
                 await message.edit({ embeds: [embed] });
 
-                // Update the lyrics every 1000ms
+                // Update the lyrics every 50ms
                 const interval = setInterval(async () => {
+                    if (!player || !player.playing) {
+                        clearInterval(interval);
+                        return;
+                    }
                     const currentTime = player.position - 300;
                     currentLyric = getCurrentLyric(parsedLyrics, currentTime);
                     embed.setDescription(description.replace(/(\*\*Lyrics\*\*: ).*/, `**Lyrics**: ${currentLyric}`));
