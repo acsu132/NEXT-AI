@@ -84,22 +84,21 @@ module.exports = (client) => {
 
                 const attachment = new AttachmentBuilder(cardImage, { name: 'songcard.png' });
 
-                const description = `- Título: ${track.info.title} \n`+
+                let description = `- Título: ${track.info.title} \n`+
                 ` - Artista: ${track.info.author} \n`+
                 ` - Duração: ${formatTime(track.info.length)} (\`${track.info.length}ms\`) \n`+
                 ` - Stream: ${track.info.stream ? "Sim" : "Não"} \n`+
                 ` - Pesquisável: ${track.info.seekable ? "Sim" : "Não"} \n`+
                 ` - URI: [Link](${track.info.uri}) \n`+
                 ` - Fonte: ${track.info.sourceName} \n`+ 
-                ` - Pedido por: ${track.requester ? `<@${track.requester.id}>` : "Unknown"}`; 
+                ` - Pedido por: ${track.requester ? `<@${track.requester.id}>` : "Unknown"}` + "\n\n**Lyrics**\nFetching lyrics..."; 
                 
                 const embed = new EmbedBuilder()
                     .setAuthor({ name: "Tocando agora...", iconURL: musicIcons.playerIcon, url: "https://dsc.gg/nextech" })
                     .setDescription(description)
                     .setImage('attachment://songcard.png')
                     .setFooter({ text: 'Distube Player', iconURL: musicIcons.footerIcon })
-                    .setColor('#9900ff')
-                    .addFields({ name: 'Lyrics', value: 'Fetching lyrics...', inline: false });
+                    .setColor('#9900ff');
 
                 // Conditionally create buttons only if track.requester is defined.
                 let components = [];
@@ -137,7 +136,8 @@ module.exports = (client) => {
                 const response = await axios.get(apiUrl);
 
                 if (!response.data || !response.data.syncedLyrics) {
-                    return message.edit({ embeds: [embed.setFields({ name: 'Lyrics', value: 'No lyrics found.' })] });
+                    embed.setDescription(description.replace('Fetching lyrics...', 'No lyrics found.'));
+                    return message.edit({ embeds: [embed] });
                 }
 
                 const lyrics = response.data.syncedLyrics;
@@ -178,10 +178,8 @@ module.exports = (client) => {
                 const interval = setInterval(async () => {
                     const currentTime = player.position;
                     const currentLyric = getCurrentLyric(parsedLyrics, currentTime);
-                    if (embed.fields[0].value !== currentLyric) {
-                        embed.fields[0].value = currentLyric;
-                        await message.edit({ embeds: [embed] });
-                    }
+                    embed.setDescription(description.replace(/Fetching lyrics...|No lyrics found.|.*/, currentLyric));
+                    await message.edit({ embeds: [embed] });
                 }, 500);
 
                 player.on('trackEnd', () => clearInterval(interval));
