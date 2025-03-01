@@ -5,6 +5,8 @@ const path = require('path');
 const musicIcons = require('../UI/icons/musicicons');
 const { Riffy } = require('riffy');
 const { autoplayCollection } = require('../mongodb');
+const axios = require('axios');
+const sanitize = require('sanitize-filename');
 
 module.exports = (client) => {
     if (config.excessCommands.lavalink) {
@@ -96,7 +98,8 @@ module.exports = (client) => {
                     .setDescription(description)
                     .setImage('attachment://songcard.png')
                     .setFooter({ text: 'Distube Player', iconURL: musicIcons.footerIcon })
-                    .setColor('#9900ff');
+                    .setColor('#9900ff')
+                    .addFields({ name: 'Lyrics', value: 'Fetching lyrics...', inline: false });
 
                 // Conditionally create buttons only if track.requester is defined.
                 let components = [];
@@ -128,6 +131,61 @@ module.exports = (client) => {
                 });
 
                 player.currentMessageId = message.id;
+
+                // Fetch the lyrics using lrclib
+                const apiUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(track.info.title)}&artist_name=${encodeURIComponent(track.info.author)}`;
+                const response = await axios.get(apiUrl);
+
+                if (!response.data || !response.data.syncedLyrics) {
+                    return message.edit({ embeds: [embed.setFields({ name: 'Lyrics', value: 'No lyrics found.' })] });
+                }
+
+                const lyrics = response.data.syncedLyrics;
+                const parsedLyrics = parseLrc(lyrics);
+                
+                // Function to parse .lrc file into a more accessible format
+                function parseLrc(lrc) {
+                    const lines = lrc.split('\n');
+                    const result = [];
+                    for (const line of lines) {
+                        const match = line.match(/\[(\d{2}:\d{2}.\d{2})\](.*)/);
+                        if (match) {
+                            result.push({ time: match[1], text: match[2] });
+                        }
+                    }
+                    return result;
+                }
+
+                // Function to get the current lyric based on the current track duration
+                function getCurrentLyric(lyrics, currentTime) {
+                    for (let i = lyrics.length - 1; i >= 0; i--) {
+                        if (currentTime >= parseTime(lyrics[i].time)) {
+                            return lyrics[i].text;
+                        }
+                    }
+                    return '';
+                }
+
+                // Function to parse time in the format mm:ss.ss to milliseconds
+                function parseTime(time) {
+                    const parts = time.split(':');
+                    const minutes = parseInt(parts[0], 10);
+                    const seconds = parseFloat(parts[1]);
+                    return (minutes * 60 + seconds) * 1000;
+                }
+
+                // Update the lyrics every 0.5 seconds
+                const interval = setInterval(async () => {
+                    const currentTime = player.position;
+                    const currentLyric = getCurrentLyric(parsedLyrics, currentTime);
+                    if (embed.fields[0].value !== currentLyric) {
+                        embed.fields[0].value = currentLyric;
+                        await message.edit({ embeds: [embed] });
+                    }
+                }, 500);
+
+                player.on('trackEnd', () => clearInterval(interval));
+
             } catch (error) {
                 console.error('Error creating or sending song card:', error);
             }
