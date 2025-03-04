@@ -30,10 +30,10 @@
     },
      "lavalink": {
         "lavalink": {
-            "identifier": "null",
-            "password": "freemenahimilta",
-            "host": "lava-v4.nextgencoders.xyz",
-            "port": 2333,
+            "identifier": "INZEWORLD.COM (DE)",
+            "password": "saher.inzeworld.com",
+            "host": "lava.inzeworld.com",
+            "port": 3128,
             "secure": false
           }
     }, 
