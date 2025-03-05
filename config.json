@@ -30,10 +30,10 @@
     },
      "lavalink": {
         "lavalink": {
-  "identifier": "ChalresNaig Node",
-  "password": "NAIGLAVA-dash.techbyte.host",
-  "host": "lavahatry4.techbyte.host",
-  "port": 3000,
+  "identifier": "None",
+  "password": "https://discord.gg/RPCfvBSUuM",
+  "host": "proxy.oreshi.com",
+  "port": 2333,
   "secure": false
 }
     }, 
