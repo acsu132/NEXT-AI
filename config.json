@@ -30,12 +30,12 @@
     },
      "lavalink": {
         "lavalink": {
-            "identifier": "INZEWORLD.COM (DE)",
-            "password": "saher.inzeworld.com",
-            "host": "lava.inzeworld.com",
-            "port": 3128,
-            "secure": false
-          }
+  "identifier": "ChalresNaig Node",
+  "password": "NAIGLAVA-dash.techbyte.host",
+  "host": "lavahatry4.techbyte.host",
+  "port": 3000,
+  "secure": false
+}
     }, 
     "spotifyClientId": "f71a3da30e254962965ca2a89d6f74b9",
     "spotifyClientSecret": "199a619d22dd4e55a4a2c1a7a3d70e63"
