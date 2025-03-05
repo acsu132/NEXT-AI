@@ -30,10 +30,10 @@
     },
      "lavalink": {
         "lavalink": {
-  "identifier": "None",
-  "password": "https://discord.gg/RPCfvBSUuM",
-  "host": "proxy.oreshi.com",
-  "port": 2333,
+  "identifier": "Muzykant v3",
+  "password": "https://discord.gg/v6sdrD9kPh",
+  "host": "lavalink_v3.muzykant.xyz",
+  "port": 80,
   "secure": false
 }
     }, 
