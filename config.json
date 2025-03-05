@@ -30,9 +30,9 @@
     },
      "lavalink": {
         "lavalink": {
-  "identifier": "Muzykant v3",
-  "password": "https://discord.gg/v6sdrD9kPh",
-  "host": "lavalink_v3.muzykant.xyz",
+  "identifier": "null",
+  "password": "https://dsc.gg/ajidevserver",
+  "host": "lava-v4.ajieblogs.eu.org",
   "port": 80,
   "secure": false
 }
