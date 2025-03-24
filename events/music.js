@@ -6,7 +6,6 @@ const musicIcons = require('../UI/icons/musicicons');
 const { Riffy } = require('riffy');
 const { autoplayCollection } = require('../mongodb');
 const axios = require('axios');
-const sanitize = require('sanitize-filename');
 const fs = require('fs');
 
 module.exports = (client) => {
@@ -138,13 +137,14 @@ module.exports = (client) => {
                 }
 
                 const lyrics = response.data.syncedLyrics;
-                const parsedLyrics = parseLrc(lyrics);
+                const parsedLyrics = lyrics.split('\n').map(line => {
+                    const match = line.match(/\[(\d{2}:\d{2}.\d{2})\](.*)/);
+                    return match ? { time: match[1], text: match[2] } : null;
+                }).filter(line => line);
 
-                const parseLrc = (lrc) => {
-                    return lrc.split('\n').map(line => {
-                        const match = line.match(/\[(\d{2}:\d{2}.\d{2})\](.*)/);
-                        return match ? { time: match[1], text: match[2] } : null;
-                    }).filter(line => line);
+                const parseTime = (time) => {
+                    const [minutes, seconds] = time.split(':').map(parseFloat);
+                    return (minutes * 60 + seconds) * 1000;
                 };
 
                 const getCurrentLyric = (lyrics, currentTime) => {
@@ -156,13 +156,7 @@ module.exports = (client) => {
                     return '';
                 };
 
-                const parseTime = (time) => {
-                    const [minutes, seconds] = time.split(':').map(parseFloat);
-                    return (minutes * 60 + seconds) * 1000;
-                };
-
-                const startTime = player.position - 300;
-                let currentLyric = getCurrentLyric(parsedLyrics, startTime);
+                let currentLyric = getCurrentLyric(parsedLyrics, player.position);
                 embed.setDescription(description.replace('Fetching lyrics...', `**Lyrics**: ${currentLyric}`));
                 await message.edit({ embeds: [embed] });
 
@@ -171,7 +165,7 @@ module.exports = (client) => {
                         clearInterval(interval);
                         return;
                     }
-                    const currentTime = player.position - 300;
+                    const currentTime = player.position;
                     currentLyric = getCurrentLyric(parsedLyrics, currentTime);
                     embed.setDescription(description.replace(/(\*\*Lyrics\*\*: ).*/, `**Lyrics**: ${currentLyric}`));
                     try {
@@ -180,14 +174,10 @@ module.exports = (client) => {
                         console.warn("Failed to edit message, it might have been deleted.");
                         clearInterval(interval);
                     }
-                }, 500); // Increased interval to reduce API calls
+                }, 100); // Update every 100ms for better synchronization
 
                 player.on('trackEnd', () => {
                     clearInterval(interval);
-                    const cachePath = path.join(__dirname, '../cache', `${sanitize(track.info.title)}.lrc`);
-                    if (fs.existsSync(cachePath)) {
-                        fs.unlinkSync(cachePath);
-                    }
                 });
 
             } catch (error) {
