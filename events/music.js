@@ -46,14 +46,14 @@ module.exports = (client) => {
                 status: 'online',
             });
 
-            function formatTime(ms) {
+            const formatTime = (ms) => {
                 if (!ms || ms === 0) return "0:00";
                 const totalSeconds = Math.floor(ms / 1000);
                 const hours = Math.floor(totalSeconds / 3600);
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
                 return `${hours > 0 ? hours + ":" : ""}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-            }
+            };
 
             try {
                 // Disable previous message's buttons if it exists.
@@ -61,11 +61,11 @@ module.exports = (client) => {
                     try {
                         const oldMessage = await channel.messages.fetch(player.currentMessageId);
                         if (oldMessage) {
-                            const disabledComponents = oldMessage.components.map(row => {
-                                return new ActionRowBuilder().addComponents(
+                            const disabledComponents = oldMessage.components.map(row => 
+                                new ActionRowBuilder().addComponents(
                                     row.components.map(button => ButtonBuilder.from(button).setDisabled(true))
-                                );
-                            });
+                                )
+                            );
                             await oldMessage.edit({ components: disabledComponents });
                         }
                     } catch (err) {
@@ -85,15 +85,16 @@ module.exports = (client) => {
 
                 const attachment = new AttachmentBuilder(cardImage, { name: 'songcard.png' });
 
-                let description = `- Título: ${track.info.title} \n`+
-                ` - Artista: ${track.info.author} \n`+
-                ` - Duração: ${formatTime(track.info.length)} (\`${track.info.length}ms\`) \n`+
-                ` - Stream: ${track.info.stream ? "Sim" : "Não"} \n`+
-                ` - Pesquisável: ${track.info.seekable ? "Sim" : "Não"} \n`+
-                ` - URI: [Link](${track.info.uri}) \n`+
-                ` - Fonte: ${track.info.sourceName} \n`+ 
-                ` - Pedido por: ${track.requester ? `<@${track.requester.id}>` : "Unknown"}` + "\n\n**Lyrics**: Fetching lyrics..."; 
-                
+                const description = `- Título: ${track.info.title} \n` +
+                    ` - Artista: ${track.info.author} \n` +
+                    ` - Duração: ${formatTime(track.info.length)} (\`${track.info.length}ms\`) \n` +
+                    ` - Stream: ${track.info.stream ? "Sim" : "Não"} \n` +
+                    ` - Pesquisável: ${track.info.seekable ? "Sim" : "Não"} \n` +
+                    ` - URI: [Link](${track.info.uri}) \n` +
+                    ` - Fonte: ${track.info.sourceName} \n` +
+                    ` - Pedido por: ${track.requester ? `<@${track.requester.id}>` : "Unknown"}` +
+                    "\n\n**Lyrics**: Fetching lyrics...";
+
                 const embed = new EmbedBuilder()
                     .setAuthor({ name: "Tocando agora...", iconURL: musicIcons.playerIcon, url: "https://dsc.gg/nextech" })
                     .setDescription(description)
@@ -102,26 +103,22 @@ module.exports = (client) => {
                     .setColor('#9900ff');
 
                 // Conditionally create buttons only if track.requester is defined.
-                let components = [];
-                if (track.requester && track.requester.id) {
-                    const buttonsRow = new ActionRowBuilder().addComponents(
+                const components = track.requester && track.requester.id ? [
+                    new ActionRowBuilder().addComponents(
                         new ButtonBuilder().setCustomId(`volume_up_${track.requester.id}`).setEmoji('🔊').setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder().setCustomId(`volume_down_${track.requester.id}`).setEmoji('🔉').setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder().setCustomId(`pause_${track.requester.id}`).setEmoji('⏸️').setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder().setCustomId(`resume_${track.requester.id}`).setEmoji('▶️').setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder().setCustomId(`skip_${track.requester.id}`).setEmoji('⏭️').setStyle(ButtonStyle.Secondary)
-                    );
-
-                    const buttonsRow2 = new ActionRowBuilder().addComponents(
+                    ),
+                    new ActionRowBuilder().addComponents(
                         new ButtonBuilder().setCustomId(`stop_${track.requester.id}`).setEmoji('⏹️').setStyle(ButtonStyle.Danger),
                         new ButtonBuilder().setCustomId(`clear_queue_${track.requester.id}`).setEmoji('🗑️').setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder().setCustomId(`show_queue_${track.requester.id}`).setEmoji('📜').setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder().setCustomId(`shuffle_${track.requester.id}`).setEmoji('🔀').setStyle(ButtonStyle.Secondary),
                         new ButtonBuilder().setCustomId(`loop_${track.requester.id}`).setEmoji('🔁').setStyle(ButtonStyle.Secondary)
-                    );
-
-                    components = [buttonsRow, buttonsRow2];
-                }
+                    )
+                ] : [];
 
                 const message = await channel.send({
                     embeds: [embed],
@@ -142,45 +139,33 @@ module.exports = (client) => {
 
                 const lyrics = response.data.syncedLyrics;
                 const parsedLyrics = parseLrc(lyrics);
-                
-                // Function to parse .lrc file into a more accessible format
-                function parseLrc(lrc) {
-                    const lines = lrc.split('\n');
-                    const result = [];
-                    for (const line of lines) {
-                        const match = line.match(/\[(\d{2}:\d{2}.\d{2})\](.*)/);
-                        if (match) {
-                            result.push({ time: match[1], text: match[2] });
-                        }
-                    }
-                    return result;
-                }
 
-                // Function to get the current lyric based on the current track duration
-                function getCurrentLyric(lyrics, currentTime) {
+                const parseLrc = (lrc) => {
+                    return lrc.split('\n').map(line => {
+                        const match = line.match(/\[(\d{2}:\d{2}.\d{2})\](.*)/);
+                        return match ? { time: match[1], text: match[2] } : null;
+                    }).filter(line => line);
+                };
+
+                const getCurrentLyric = (lyrics, currentTime) => {
                     for (let i = lyrics.length - 1; i >= 0; i--) {
                         if (currentTime >= parseTime(lyrics[i].time)) {
                             return lyrics[i].text;
                         }
                     }
                     return '';
-                }
+                };
 
-                // Function to parse time in the format mm:ss.ss to milliseconds
-                function parseTime(time) {
-                    const parts = time.split(':');
-                    const minutes = parseInt(parts[0], 10);
-                    const seconds = parseFloat(parts[1]);
+                const parseTime = (time) => {
+                    const [minutes, seconds] = time.split(':').map(parseFloat);
                     return (minutes * 60 + seconds) * 1000;
-                }
+                };
 
-                // Start the lyrics from the current track position with a negative delay of -300ms
                 const startTime = player.position - 300;
                 let currentLyric = getCurrentLyric(parsedLyrics, startTime);
                 embed.setDescription(description.replace('Fetching lyrics...', `**Lyrics**: ${currentLyric}`));
                 await message.edit({ embeds: [embed] });
 
-                // Update the lyrics every 50ms
                 const interval = setInterval(async () => {
                     if (!player || !player.playing) {
                         clearInterval(interval);
@@ -195,11 +180,10 @@ module.exports = (client) => {
                         console.warn("Failed to edit message, it might have been deleted.");
                         clearInterval(interval);
                     }
-                }, 50);
+                }, 500); // Increased interval to reduce API calls
 
                 player.on('trackEnd', () => {
                     clearInterval(interval);
-                    // Delete the lrc file from the cache
                     const cachePath = path.join(__dirname, '../cache', `${sanitize(track.info.title)}.lrc`);
                     if (fs.existsSync(cachePath)) {
                         fs.unlinkSync(cachePath);
@@ -222,9 +206,7 @@ module.exports = (client) => {
                 }
             }
 
-            // Check if there are more tracks in the queue
             if (!player.queue || player.queue.length === 0) {
-                // Update bot status back to default
                 client.user.setPresence({
                     activities: [{ name: 'YouTube Music', type: ActivityType.Watching }],
                     status: 'online',
@@ -235,10 +217,10 @@ module.exports = (client) => {
         client.riffy.on("queueEnd", async (player) => {
             const channel = client.channels.cache.get(player.textChannel);
             const guildId = player.guildId;
-            
+
             const result = await autoplayCollection.findOne({ guildId });
             const autoplay = result ? result.autoplay : false;
-            
+
             if (autoplay) {
                 player.autoplay(player);
             } else {
@@ -255,10 +237,9 @@ module.exports = (client) => {
                     } catch (err) {
                         console.error("Error deleting final embed message:", err);
                     }
-                }, 2000); 
+                }, 2000);
             }
 
-            // Update bot status back to default
             client.user.setPresence({
                 activities: [{ name: 'YouTube Music', type: ActivityType.Watching }],
                 status: 'online',
@@ -267,48 +248,45 @@ module.exports = (client) => {
 
         client.on('interactionCreate', async (interaction) => {
             if (!interaction.isButton()) return;
-        
-            const parts = interaction.customId.split('_');
-            const userId = parts.pop();        
-            const action = parts.join('_');   
-        
+
+            const [action, userId] = interaction.customId.split('_').slice(-2);
+
             if (interaction.user.id !== userId) {
                 return;
             }
-        
+
             const player = client.riffy.players.get(interaction.guildId);
             if (!player) return;
-        
-            // Defer the reply first
-            await interaction.deferReply({ flags : 64 });
-        
+
+            await interaction.deferReply({ ephemeral: true });
+
             try {
                 switch (action) {
                     case 'volume_up':
                         player.setVolume(Math.min(player.volume + 10, 100));
                         await interaction.editReply('🔊 Volume aumentado!');
                         break;
-        
+
                     case 'volume_down':
                         player.setVolume(Math.max(player.volume - 10, 0));
                         await interaction.editReply('🔉 Volume diminuido!');
                         break;
-        
+
                     case 'pause':
                         player.pause(true);
                         await interaction.editReply('⏸️ Player pausado.');
                         break;
-        
+
                     case 'resume':
                         player.pause(false);
                         await interaction.editReply('▶️ Player resumido.');
                         break;
-        
+
                     case 'skip':
                         player.stop();
                         await interaction.editReply('⏭️ Pulando para a próxima música!');
                         break;
-        
+
                     case 'stop': {
                         const channel = client.channels.cache.get(player.textChannel);
                         if (player.currentMessageId) {
@@ -337,23 +315,23 @@ module.exports = (client) => {
                         await interaction.editReply('Parei a música, desconectandooo :P');
                         break;
                     }
-        
+
                     case 'clear_queue':
                         player.queue.clear();
                         await interaction.editReply('🗑️Fila engolida com sucesso 😋.');
                         break;
-        
+
                     case 'shuffle':
                         player.queue.shuffle();
                         await interaction.editReply('🔀 Fila misturada!');
                         break;
-        
+
                     case 'loop':
                         const loopMode = player.loop === 'none' ? 'track' : player.loop === 'track' ? 'queue' : 'none';
                         player.setLoop(loopMode);
                         await interaction.editReply(`🔁 Modo loop definido como: **${loopMode}**.`);
                         break;
-        
+
                     case 'show_queue':
                         if (!player.queue || player.queue.length === 0) {
                             await interaction.editReply('❌ A fila está vazia.');
@@ -364,7 +342,7 @@ module.exports = (client) => {
                             await interaction.editReply(`🎶 **Fila:**\n${queueStr}`);
                         }
                         break;
-        
+
                     default:
                         await interaction.editReply('❌ Ação desconhecida.');
                         break;
