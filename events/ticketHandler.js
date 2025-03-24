@@ -8,8 +8,7 @@ const {
     ActionRowBuilder,
     StringSelectMenuBuilder,
     PermissionsBitField,
-    ChannelType,
-    MessageFlagsBits
+    ChannelType
 } = require('discord.js');
 const ticketIcons = require('../UI/icons/ticketicons');
 
@@ -138,7 +137,7 @@ async function monitorConfigChanges(client) {
 
 async function handleSelectMenu(interaction, client) {
     try {
-        await interaction.deferReply({ flags: 64 });
+        await interaction.deferReply({ ephemeral: true });
     } catch (error) {
         console.error("Erro ao adiar resposta:", error);
     }
@@ -157,7 +156,7 @@ async function handleSelectMenu(interaction, client) {
         if (ticketExists) {
             return interaction.followUp({
                 content: 'Você já tem um ticket aberto!!! >:V',
-                flags: 64
+                ephemeral: true
             });
         }
     } catch (error) {
@@ -204,7 +203,7 @@ async function handleSelectMenu(interaction, client) {
         console.error("Erro ao criar canal de ticket:", error);
         return interaction.followUp({
             content: "Não consegui criar o ticket, contate um administrador :(",
-            flags: 64
+            ephemeral: true
         });
     }
 
@@ -277,7 +276,7 @@ async function handleSelectMenu(interaction, client) {
     try {
         await interaction.followUp({
             content: 'Ticket criado!',
-            flags: 64
+            ephemeral: true
         });
     } catch (error) {
         console.error("Erro ao enviar mensagem de acompanhamento:", error);
@@ -286,7 +285,7 @@ async function handleSelectMenu(interaction, client) {
 
 async function handleCloseButton(interaction, client) {
     try {
-        await interaction.deferReply({ flags: 64 });
+        await interaction.deferReply({ ephemeral: true });
     } catch (error) {
         console.error("Erro ao adiar resposta no botão de fechar:", error);
     }
@@ -304,7 +303,7 @@ async function handleCloseButton(interaction, client) {
     if (!ticket) {
         return interaction.followUp({
             content: 'Ticket não encontrado, reporte o bug para o Administrador.',
-            flags: 64
+            ephemeral: true
         });
     }
 
@@ -381,7 +380,7 @@ async function handleCloseButton(interaction, client) {
     try {
         await interaction.followUp({
             content: 'Ticket fechado e usuário notificado.',
-            flags: 64
+            ephemeral: true
         });
     } catch (error) {
         console.error("Erro ao enviar mensagem de acompanhamento para fechamento do ticket:", error);
@@ -389,12 +388,6 @@ async function handleCloseButton(interaction, client) {
 }
 
 async function handleDeleteButton(interaction, client) {
-    try {
-        await interaction.deferReply({ flags: 64 });
-    } catch (error) {
-        console.error("Erro ao adiar resposta no botão de deletar:", error);
-    }
-
     const ticketId = interaction.customId.replace('delete_ticket_', '');
     const { guild, user } = interaction;
     if (!guild || !user) return;
@@ -404,19 +397,11 @@ async function handleDeleteButton(interaction, client) {
         ticket = await ticketsCollection.findOne({ id: ticketId });
     } catch (error) {
         console.error("Erro ao encontrar ticket no banco de dados:", error);
-    }
-    if (!ticket) {
-        return interaction.followUp({
-            content: 'Ticket não encontrado, reporte o bug para o Administrador.',
-            flags: 64
-        });
+        return interaction.reply({ content: 'Ticket não encontrado, reporte o bug para o Administrador.', ephemeral: true });
     }
 
     if (!guild.members.cache.get(user.id).roles.cache.has(ticket.adminRoleId)) {
-        return interaction.followUp({
-            content: 'Você não tem permissão para deletar este ticket.',
-            flags: 64
-        });
+        return interaction.reply({ content: 'Você não tem permissão para deletar este ticket.', ephemeral: true });
     }
 
     const ticketChannel = guild.channels.cache.get(ticket.channelId);
@@ -426,9 +411,9 @@ async function handleDeleteButton(interaction, client) {
             await ticketChannel.delete();
         } catch (error) {
             console.error("Erro ao deletar canal do ticket:", error);
-            return interaction.followUp({
+            return interaction.reply({
                 content: "Não consegui deletar o ticket, contate um administrador :(",
-                flags: 64
+                ephemeral: true
             });
         }
     }
@@ -437,13 +422,11 @@ async function handleDeleteButton(interaction, client) {
         await ticketsCollection.deleteOne({ id: ticketId });
     } catch (error) {
         console.error("Erro ao deletar ticket no banco de dados:", error);
+        return interaction.reply({ content: 'Erro ao deletar dados do ticket.', ephemeral: true });
     }
 
     try {
-        await interaction.followUp({
-            content: 'Ticket deletado com sucesso.',
-            flags: 64
-        });
+        await interaction.reply({ content: 'Ticket deletado com sucesso.', ephemeral: true });
     } catch (error) {
         console.error("Erro ao enviar mensagem de acompanhamento para deletar o ticket:", error);
     }
