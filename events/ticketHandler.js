@@ -22,6 +22,7 @@ async function loadConfig() {
             acc[ticket.serverId] = {
                 ticketChannelId: ticket.ticketChannelId,
                 adminRoleId: ticket.adminRoleId,
+                supportTeamRoleId: ticket.supportTeamRoleId,
                 status: ticket.status
             };
             return acc;
@@ -49,6 +50,8 @@ module.exports = (client) => {
                 handleSelectMenu(interaction, client);
             } else if (interaction.isButton() && interaction.customId.startsWith('close_ticket_')) {
                 handleCloseButton(interaction, client);
+            } else if (interaction.isButton() && interaction.customId.startsWith('delete_ticket_')) {
+                handleDeleteButton(interaction, client);
             }
         } catch (error) {
             console.error('Erro ao lidar com a interação:', error);
@@ -186,6 +189,14 @@ async function handleSelectMenu(interaction, client) {
                         PermissionsBitField.Flags.SendMessages,
                         PermissionsBitField.Flags.ReadMessageHistory
                     ]
+                },
+                {
+                    id: settings.supportTeamRoleId,
+                    allow: [
+                        PermissionsBitField.Flags.ViewChannel,
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.ReadMessageHistory
+                    ]
                 }
             ]
         });
@@ -222,7 +233,12 @@ async function handleSelectMenu(interaction, client) {
         .setLabel('Fechar Ticket')
         .setStyle(ButtonStyle.Danger);
 
-    const actionRow = new ActionRowBuilder().addComponents(closeButton);
+    const deleteButton = new ButtonBuilder()
+        .setCustomId(`delete_ticket_${ticketId}`)
+        .setLabel('Excluir Ticket')
+        .setStyle(ButtonStyle.Danger);
+
+    const actionRow = new ActionRowBuilder().addComponents(closeButton, deleteButton);
 
     try {
         await ticketChannel.send({
@@ -236,7 +252,6 @@ async function handleSelectMenu(interaction, client) {
 
     const embed = new EmbedBuilder()
         .setColor(0x0099ff)
-        .setImage('https://media.discordapp.net/attachments/1335584527413809172/1337940563202146324/193_Sem_Titulo_20250208211747.png?ex=67ab4000&is=67a9ee80&hm=5c1b0d32b946bc60b6e00c0f2c3801b0592501d[...]')
         .setAuthor({
             name: "Ticket Criado!",
             iconURL: ticketIcons.correctIcon,
@@ -321,6 +336,7 @@ async function handleCloseButton(interaction, client) {
                 try {
                     await ticketChannel.permissionOverwrites.edit(ticket.userId, { ViewChannel: false });
                     await ticketChannel.permissionOverwrites.edit(ticket.adminRoleId, { ViewChannel: true });
+                    await ticketChannel.permissionOverwrites.edit(ticket.supportTeamRoleId, { ViewChannel: true });
                 } catch (error) {
                     console.error("Erro ao editar permissões do canal do ticket:", error);
                 }
@@ -369,5 +385,66 @@ async function handleCloseButton(interaction, client) {
         });
     } catch (error) {
         console.error("Erro ao enviar mensagem de acompanhamento para fechamento do ticket:", error);
+    }
+}
+
+async function handleDeleteButton(interaction, client) {
+    try {
+        await interaction.deferReply({ flags: 64 });
+    } catch (error) {
+        console.error("Erro ao adiar resposta no botão de deletar:", error);
+    }
+
+    const ticketId = interaction.customId.replace('delete_ticket_', '');
+    const { guild, user } = interaction;
+    if (!guild || !user) return;
+
+    let ticket;
+    try {
+        ticket = await ticketsCollection.findOne({ id: ticketId });
+    } catch (error) {
+        console.error("Erro ao encontrar ticket no banco de dados:", error);
+    }
+    if (!ticket) {
+        return interaction.followUp({
+            content: 'Ticket não encontrado, reporte o bug para o Administrador.',
+            flags: 64
+        });
+    }
+
+    if (!guild.members.cache.get(user.id).roles.cache.has(ticket.adminRoleId)) {
+        return interaction.followUp({
+            content: 'Você não tem permissão para deletar este ticket.',
+            flags: 64
+        });
+    }
+
+    const ticketChannel = guild.channels.cache.get(ticket.channelId);
+
+    if (ticketChannel) {
+        try {
+            await ticketChannel.delete();
+        } catch (error) {
+            console.error("Erro ao deletar canal do ticket:", error);
+            return interaction.followUp({
+                content: "Não consegui deletar o ticket, contate um administrador :(",
+                flags: 64
+            });
+        }
+    }
+
+    try {
+        await ticketsCollection.deleteOne({ id: ticketId });
+    } catch (error) {
+        console.error("Erro ao deletar ticket no banco de dados:", error);
+    }
+
+    try {
+        await interaction.followUp({
+            content: 'Ticket deletado com sucesso.',
+            flags: 64
+        });
+    } catch (error) {
+        console.error("Erro ao enviar mensagem de acompanhamento para deletar o ticket:", error);
     }
 }
