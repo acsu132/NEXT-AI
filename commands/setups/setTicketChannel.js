@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField } = require('disc
 const { ticketsCollection } = require('../../mongodb');
 const cmdIcons = require('../../UI/icons/commandicons');
 const { serverConfigCollection } = require('../../mongodb'); 
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('setticketchannel')
@@ -23,6 +24,10 @@ module.exports = {
                 .addStringOption(option =>
                     option.setName('adminroleid')
                         .setDescription('The ID of the admin role for tickets')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('supportteamrole')
+                        .setDescription('The ID of the support team role')
                         .setRequired(true))
                 .addBooleanOption(option =>
                     option.setName('status')
@@ -69,11 +74,12 @@ module.exports = {
             if (subcommand === 'set') {
                 const channelId = interaction.options.getString('channelid');
                 const adminRoleId = interaction.options.getString('adminroleid');
+                const supportTeamRoleId = interaction.options.getString('supportteamrole');
                 const status = interaction.options.getBoolean('status');
                 const categoryId = interaction.options.getString('categoryid');
 
-                if (!serverId || !channelId || !adminRoleId || status === null) {
-                    return interaction.reply({ content: 'Invalid input. Please provide valid server ID, channel ID, admin role ID, and status.', flags: 64 });
+                if (!serverId || !channelId || !adminRoleId || !supportTeamRoleId || status === null) {
+                    return interaction.reply({ content: 'Invalid input. Please provide valid server ID, channel ID, admin role ID, support team role ID, and status.', flags: 64 });
                 }
 
                 // Check permissions: Only the server owner or assigned owners can modify settings.
@@ -81,7 +87,7 @@ module.exports = {
                 // Update the database
                 await ticketsCollection.updateOne(
                     { serverId },
-                    { $set: { serverId, ticketChannelId: channelId, adminRoleId, status, categoryId, ownerId: serverOwnerId } },
+                    { $set: { serverId, ticketChannelId: channelId, adminRoleId, supportTeamRoleId, status, categoryId, ownerId: serverOwnerId } },
                     { upsert: true }
                 );
 
@@ -101,6 +107,7 @@ module.exports = {
                         **Server ID:** ${configData.serverId}
                         **Ticket Channel ID:** ${configData.ticketChannelId}
                         **Admin Role ID:** ${configData.adminRoleId}
+                        **Support Team Role ID:** ${configData.supportTeamRoleId}
                         **Status:** ${configData.status ? 'Enabled' : 'Disabled'}
                         **Category ID:** ${configData.categoryId || 'None'}
                     `)
